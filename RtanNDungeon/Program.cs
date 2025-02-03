@@ -64,9 +64,9 @@ namespace RtanNDungeon
                     WriteBlankLine();
                     Console.WriteLine("\t\t==== 상태보기 ====");
                     WriteBlankLine();
-                    Console.WriteLine("이름: 당신 (레벨1 전사)");  // player's name / level / job
-                    Console.WriteLine("공격: 10\t방어: 10\t체력: 100");  // player's attack / defense / health
-                    Console.WriteLine();  // player's gold
+                    Console.WriteLine($"이름: {player.Name} (레벨{player.Level} {player.Job})");  // player's name / level / job
+                    Console.WriteLine($"공격: {player.Attack}\t방어: {player.Defense}\t체력: {player.Health}");  // player's attack / defense / health
+                    Console.WriteLine($"잔고: {player.Gold}");  // player's gold
 
                     Console.WriteLine("[0] 나가기");
 
@@ -142,7 +142,10 @@ namespace RtanNDungeon
                     {
                         // if warrior
                         case "1":
+                            WriteBlankLine();
                             Console.WriteLine("전사를 선택하셨습니다. 맞나요?");
+                            WriteBlankLine();
+                            Console.WriteLine("[1] 예\t[2] 아니오");
                             string inputW = Console.ReadLine();
                             switch (inputW)
                             {
@@ -155,7 +158,10 @@ namespace RtanNDungeon
                             break;
                         // if archer (not embodied)
                         case "2":
+                            WriteBlankLine();
                             Console.WriteLine("궁수를 선택하셨습니다. 맞나요?");
+                            WriteBlankLine();
+                            Console.WriteLine("[1] 예\t[2] 아니오");
                             string inputA = Console.ReadLine();
                             switch (inputA)
                             {
@@ -173,23 +179,24 @@ namespace RtanNDungeon
             // set player's default status [later] different by player's job
             private int[] SetPlayerStatus(int jobId)
             {
+                // initiating default status values
                 int attack = 0; int defense = 0; int health = 0;
-                int[] status = new int[] { attack, defense, health };
 
-                if (isJob)
+                // set status values
+                switch (jobId)
                 {
-                    switch (jobId)
-                    {
-                        // if warrior
-                        case 1:
-                            attack = 10; defense = 10, health = 100;
-                            break;
-                        // if archer
-                        case 2:
-                            attack = 20; defense = 5, health = 100;
-                            break;
-                    }
+                    // if warrior
+                    case 1:
+                        attack = 10; defense = 10; health = 100;
+                        break;
+                    // if archer
+                    case 2:
+                        attack = 20; defense = 5; health = 100;
+                        break;
                 }
+                
+                // set status
+                int[] status = new int[3] { attack, defense, health };
                 return status;
             }
             // check inventory - show player's inventory
