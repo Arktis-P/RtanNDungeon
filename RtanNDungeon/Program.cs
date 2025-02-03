@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.Tracing;
+﻿using System.ComponentModel;
+using System.Diagnostics.Tracing;
 using System.Runtime.InteropServices;
 
 namespace RtanNDungeon
@@ -6,236 +7,437 @@ namespace RtanNDungeon
     // class for player
     // [later] class (or interface) for monsters
     // class (or interface) for items
-    // pages: [/] start page / [/] status page / [/] player inventory / [] shop page (buy & sell)
+    // pages: [/] start page / [V] status page / [/] player inventory / [] shop page (buy & sell)
     // [later] pages: [] rest page / []dungeon page
     internal class Program
     {
-        class Game
-        {
-            private Player player;
-
-            private bool isName = false;
-            private bool isJob = false;
-
-            // when game starts: start page
-            public void Start()
-            {
-                ShowIntroduction();  // show game introduction
-                InitializePlayer();  // initialize character ([later] load player data from storage)
-                StartMenu(); // show start page menu
-            }
-            // show game introduction
-            private void ShowIntroduction()
-            {
-                DrawDivision();
-                Console.WriteLine("텍스트 RPG의 세계, 르탄향에 오신 것을 환영합니다.");
-                DrawDivision();
-            }
-            // show start page menu
-            private void StartMenu()
-            {
-                while (true)
-                {
-                    WriteBlankLine();
-                    Console.WriteLine("이곳은 르탄향 중심지입니다. 르탄궁으로 향하기 전에 준비를 할 수 있습니다.\n무엇을 하시겠습니까?");
-                    Console.WriteLine("[1] 상태보기\t[2] 인벤토리\t[3] 상점\t[99] 게임종료");
-                    // add later [4] rest [5] to dungeon
-
-                    // get player's input (int only, in string value)
-                    string input = Console.ReadLine();
-                    switch (input)
-                    {
-                        case "1": ShowStatus(); break;  // check status
-                        case "2": ShowInventory();  break;  // check inventory
-                        case "3": break;  // visit shop
-                        case "4": break;  // take a rest
-                        case "5": break;  // explore dungeon
-                        case "99": break;  // end game
-                        default: WriteInputError(); break;  // wrong input
-                    }
-                }
-            }
-
-            // check status - show player's status
-            private void ShowStatus()
-            {
-                while (true)
-                {
-                    WriteBlankLine();
-                    Console.WriteLine("\t\t==== 상태보기 ====");
-                    WriteBlankLine();
-                    Console.WriteLine($"이름: {player.Name} (레벨{player.Level} {player.Job})");  // player's name / level / job
-                    Console.WriteLine($"공격: {player.Attack}\t방어: {player.Defense}\t체력: {player.Health}");  // player's attack / defense / health
-                    Console.WriteLine($"잔고: {player.Gold}");  // player's gold
-
-                    Console.WriteLine("[0] 나가기");
-
-                    // get pl's input
-                    string input = Console.ReadLine();
-                    switch (input)
-                    {
-                        case "0": StartMenu(); break;
-                        default:
-                            WriteInputError(); break;
-                    }
-                }
-            }
-            // initialize player
-            private void InitializePlayer()
-            {
-                // input player's name
-                string name = SetPlayerName("");
-                // select player's job
-                int jobId = SetPlayerJob(0);
-                string job;
-                switch (jobId)
-                {
-                    case 1: job = "전사"; break;
-                    case 2: job = "궁수"; break;
-                    default: job = "전사";  break;
-                }
-                // set player's status by job
-                int[] defaultStatus = SetPlayerStatus(jobId);
-                // set player class object
-                player = new Player(name, 1, job, defaultStatus[0], defaultStatus[1], defaultStatus[2], 0);
-            }
-            // set player's name
-            private string SetPlayerName(string name)
-            {
-                while (!isName)
-                {
-                    WriteBlankLine();
-                    Console.WriteLine("당신의 이름을 입력해주세요:");
-                    name = Console.ReadLine();
-                    // check player's name
-                    // check if player didn't input anything
-                    if (name == null) { name = "당신"; }  // if null, set name 당신
-                    Console.WriteLine($"당신의 이름은 {name} 입니다. 맞나요?");
-                    Console.WriteLine("[1] 예\t[2] 아니오");
-
-                    string input = Console.ReadLine();
-                    switch (input)
-                    {
-                        // if yes, set name and go to choose job
-                        case "1": isName = true; break;
-                        // if no, go back
-                        case "2": break;
-                        default: WriteInputError(); break;
-                    }
-                }
-                // if isName = true, return name
-                return name;
-            }
-            // chosse player's job
-            private int SetPlayerJob(int jobId)
-            {
-                while (!isJob)
-                {
-                    WriteBlankLine();
-                    Console.WriteLine("당신의 직업을 선택해주세요.");
-                    WriteBlankLine();
-                    Console.WriteLine("[1] 전사\t[2] 궁수");
-
-                    // check player's job
-                    string input = Console.ReadLine();
-                    switch (input)
-                    {
-                        // if warrior
-                        case "1":
-                            WriteBlankLine();
-                            Console.WriteLine("전사를 선택하셨습니다. 맞나요?");
-                            WriteBlankLine();
-                            Console.WriteLine("[1] 예\t[2] 아니오");
-                            string inputW = Console.ReadLine();
-                            switch (inputW)
-                            {
-                                case "1": 
-                                    isJob = true; jobId = 1;
-                                    break;
-                                case "2": break;
-                                default: WriteInputError(); break;
-                            }
-                            break;
-                        // if archer (not embodied)
-                        case "2":
-                            WriteBlankLine();
-                            Console.WriteLine("궁수를 선택하셨습니다. 맞나요?");
-                            WriteBlankLine();
-                            Console.WriteLine("[1] 예\t[2] 아니오");
-                            string inputA = Console.ReadLine();
-                            switch (inputA)
-                            {
-                                case "1":
-                                    isJob = true; jobId = 2;
-                                    break;
-                                case "2": break;
-                                default: WriteInputError(); break;
-                            }
-                            break;
-                    }
-                }
-                return jobId;
-            }
-            // set player's default status [later] different by player's job
-            private int[] SetPlayerStatus(int jobId)
-            {
-                // initiating default status values
-                int attack = 0; int defense = 0; int health = 0;
-
-                // set status values
-                switch (jobId)
-                {
-                    // if warrior
-                    case 1:
-                        attack = 10; defense = 10; health = 100;
-                        break;
-                    // if archer
-                    case 2:
-                        attack = 20; defense = 5; health = 100;
-                        break;
-                }
-                
-                // set status
-                int[] status = new int[3] { attack, defense, health };
-                return status;
-            }
-            // check inventory - show player's inventory
-            private void ShowInventory()
-            {
-                WriteBlankLine();
-                Console.WriteLine("\t\t==== 인벤토리 ====");
-                WriteBlankLine();
-            }
-            // visit shop - show shop page
-            // end game
-        }
-
-        // player's class
-        class Player
-        {
-            public string Name { get; }  // player name
-            public int Level { get; }  // player level
-            public string Job { get; }  // player job
-            public int Attack { get; }  // player attack
-            public int Defense { get; }  // player defense
-            public int Health { get; }  // player health
-            public int Gold { get; }  // player gold
-
-            // initiate class
-            public Player(string name, int level, string job, int attack, int defense, int health, int gold)
-            {
-                Name = name; Level = level; Job = job; Attack = attack; Defense = defense; Health = health; Gold = gold;
-            }
-        }
-
-        static void DrawDivision() { Console.WriteLine("================================================================"); }  // draw division line using 64 x "="
-        static void WriteBlankLine() { Console.WriteLine(""); }
-        static void WriteInputError() { Console.WriteLine("!!!! 잘못된 입력입니다. 다시 선택해주세요."); }
         static void Main(string[] args)
         {
             // initiate game
             Game game = new Game();
             game.Start();
+        }
+    }
+
+    
+
+    class Game
+    {
+        private Player player;
+
+        private bool isName = false;
+        private bool isJob = false;
+
+        // common methods
+        private void DrawDivision() { Console.WriteLine("================================================================"); }  // draw division line using 64 x "="
+        private void WriteBlankLine() { Console.WriteLine(""); }
+        private void WriteInputError() { Console.WriteLine("!!!! 잘못된 입력입니다. 다시 선택해주세요."); }
+
+        // when game starts: start page
+        public void Start()
+        {
+            ShowIntroduction();  // show game introduction
+            InitializePlayer();  // initialize character ([later] load player data from storage)
+            StartMenu(); // show start page menu
+        }
+        // show game introduction
+        private void ShowIntroduction()
+        {
+            DrawDivision();
+            Console.WriteLine("텍스트 RPG의 세계, 르탄향에 오신 것을 환영합니다.");
+            DrawDivision();
+        }
+        // show start page menu
+        private void StartMenu()
+        {
+            while (true)
+            {
+                WriteBlankLine();
+                Console.WriteLine("이곳은 르탄향 중심지입니다. 르탄궁으로 향하기 전에 준비를 할 수 있습니다.\n무엇을 하시겠습니까?");
+                WriteBlankLine();
+                Console.WriteLine("[1] 상태보기\t[2] 인벤토리\t[3] 상점\t[99] 게임종료");
+                // add later [4] rest [5] to dungeon
+
+                // get player's input (int only, in string value)
+                string input = Console.ReadLine();
+                switch (input)
+                {
+                    case "1": ShowStatus(); break;  // check status
+                    case "2": ShowInventory(); break;  // check inventory
+                    case "3": break;  // visit shop
+                    case "4": break;  // take a rest
+                    case "5": break;  // explore dungeon
+                    case "99": EndGame(); return;  // end game
+                    default: WriteInputError(); break;  // wrong input
+                }
+            }
+        }
+
+        // check status - show player's status
+        private void ShowStatus()
+        {
+            while (true)
+            {
+                WriteBlankLine();
+                Console.WriteLine("\t\t==== 상태보기 ====");
+                Console.WriteLine("캐릭터의 정보를 확인할 수 있습니다.");
+                WriteBlankLine();
+                Console.WriteLine($"이름: {player.Name} (레벨{player.Level} {player.Job})");  // player's name / level / job
+                Console.WriteLine($"공격: {player.Attack}\t방어: {player.Defense}\t체력: {player.Health}");  // player's attack / defense / health
+                Console.WriteLine($"잔고: {player.Gold}");  // player's gold
+
+                Console.WriteLine("[0] 나가기");
+
+                // get pl's input
+                string input = Console.ReadLine();
+                switch (input)
+                {
+                    case "0": StartMenu(); break;
+                    default:
+                        WriteInputError(); break;
+                }
+            }
+        }
+        // initialize player
+        private void InitializePlayer()
+        {
+            // input player's name
+            string name = SetPlayerName("");
+            // select player's job
+            int jobId = SetPlayerJob(0);
+            string job;
+            switch (jobId)
+            {
+                case 1: job = "전사"; break;
+                case 2: job = "궁수"; break;
+                default: job = "전사"; break;
+            }
+            // set player's status by job
+            int[] defaultStatus = SetPlayerStatus(jobId);
+            // set player class object
+            player = new Player(name, 1, job, defaultStatus[0], defaultStatus[1], defaultStatus[2], 0);
+        }
+        // set player's name
+        private string SetPlayerName(string name)
+        {
+            while (!isName)
+            {
+                WriteBlankLine();
+                Console.WriteLine("당신의 이름을 입력해주세요:");
+                name = Console.ReadLine();
+                // check player's name
+                // check if player didn't input anything
+                if (name == null || name == "") { name = "당신"; }  // if null, set name 당신
+                Console.WriteLine($"당신의 이름은 {name} 입니다. 맞나요?");
+                Console.WriteLine("[1] 예\t[2] 아니오");
+
+                string input = Console.ReadLine();
+                switch (input)
+                {
+                    // if yes, set name and go to choose job
+                    case "1": isName = true; break;
+                    // if no, go back
+                    case "2": break;
+                    default: WriteInputError(); break;
+                }
+            }
+            // if isName = true, return name
+            return name;
+        }
+        // chosse player's job
+        private int SetPlayerJob(int jobId)
+        {
+            while (!isJob)
+            {
+                WriteBlankLine();
+                Console.WriteLine("당신의 직업을 선택해주세요.");
+                WriteBlankLine();
+                Console.WriteLine("[1] 전사\t[2] 궁수");
+
+                // check player's job
+                string input = Console.ReadLine();
+                switch (input)
+                {
+                    // if warrior
+                    case "1":
+                        WriteBlankLine();
+                        Console.WriteLine("전사를 선택하셨습니다. 맞나요?");
+                        WriteBlankLine();
+                        Console.WriteLine("[1] 예\t[2] 아니오");
+                        string inputW = Console.ReadLine();
+                        switch (inputW)
+                        {
+                            case "1":
+                                isJob = true; jobId = 1;
+                                break;
+                            case "2": break;
+                            default: WriteInputError(); break;
+                        }
+                        break;
+                    // if archer (not embodied)
+                    case "2":
+                        WriteBlankLine();
+                        Console.WriteLine("궁수를 선택하셨습니다. 맞나요?");
+                        WriteBlankLine();
+                        Console.WriteLine("[1] 예\t[2] 아니오");
+                        string inputA = Console.ReadLine();
+                        switch (inputA)
+                        {
+                            case "1":
+                                isJob = true; jobId = 2;
+                                break;
+                            case "2": break;
+                            default: WriteInputError(); break;
+                        }
+                        break;
+                }
+            }
+            return jobId;
+        }
+        // set player's default status [later] different by player's job
+        private int[] SetPlayerStatus(int jobId)
+        {
+            // initiating default status values
+            int attack = 0; int defense = 0; int health = 0;
+
+            // set status values
+            switch (jobId)
+            {
+                // if warrior
+                case 1:
+                    attack = 10; defense = 10; health = 100;
+                    break;
+                // if archer
+                case 2:
+                    attack = 20; defense = 5; health = 100;
+                    break;
+            }
+
+            // set status
+            int[] status = new int[3] { attack, defense, health };
+            return status;
+        }
+        // check inventory - show player's inventory
+        private void ShowInventory()
+        {
+            while (true)
+            {
+                WriteBlankLine();
+                Console.WriteLine("\t\t==== 인벤토리 ====");
+                Console.WriteLine("보유 중인 아이템을 관리할 수 있습니다.");
+                WriteBlankLine();
+                Console.WriteLine("\t\t[보유 아이템 목록]");
+                // show the list of items
+                ShowItemList(false);
+                WriteBlankLine();
+                Console.WriteLine("[1] 장착 관리\t[0] 나가기");
+
+                // get player's input
+                string input = Console.ReadLine();
+                switch (input)
+                {
+                    case "1": ManageEquipment(); break;
+                    case "0": StartMenu(); break;
+                    default:
+                        WriteInputError(); break;
+                }
+            }
+        }
+        // show list of items
+        private void ShowItemList(bool isManaging)
+        {
+            List<Item> inven = player.inventory;
+            
+            // if inventory is empty
+            if (inven.Count == 0) { Console.WriteLine("\t인벤토리가 비어 있습니다."); }
+            // else
+            else
+            {
+                string itemNumber = "";
+                string equiped = "";
+                string bonusLabel = "";
+                for (int i = 0; i < inven.Count; i++)
+                {
+                    // check if manage page
+                    if (isManaging) { itemNumber = $"[{i + 1}]"; }
+                    else { itemNumber = "-"; }
+                    // check if equiped already
+                    if (inven[i] is IEquipable equipItem && equipItem.Equip) { equiped = "(E)"; }
+                    // check item bonus
+                    if (inven[i] is Weapon weaponItem) { bonusLabel = $"공격 +{weaponItem.Bonus}"; }
+                    else if (inven[i] is Armor armorItem) { bonusLabel = $"방어 +{armorItem.Bonus}"; }
+
+                    Console.WriteLine($"{itemNumber} {equiped}{inven[i].Name}\t| {bonusLabel}\t| {inven[i].Desc}");
+                }
+            }
+        }
+        // manage equipment
+        private void ManageEquipment()
+        {
+            while (true)
+            {
+                WriteBlankLine();
+                Console.WriteLine("\t\t==== 장착관리 ====");
+                Console.WriteLine("보유 중인 아이템을 장착하거나 해제할 수 있습니다.");
+                WriteBlankLine();
+                Console.WriteLine("\t\t[보유 아이템 목록]");
+                // show the list of items
+                ShowItemList(true);
+                WriteBlankLine();
+                Console.WriteLine("[0] 나가기");
+
+                // get player's input
+                string input = Console.ReadLine();
+                // if input is 0, go back 
+                if (input == "0") { ShowInventory(); }
+                // if input is in item list, equip/unequip
+                else if (int.TryParse(input, out int itemNumber) && itemNumber > 0 && itemNumber <= player.inventory.Count)
+                {
+                    // check if item is equiped or not
+                    if (player.inventory[itemNumber] is IEquipable equipItem)
+                    {
+                        if (!equipItem.Equip) { player.UnUseItem(player.inventory[itemNumber]); }
+                        else { player.UseItem(player.inventory[itemNumber]); }
+                    }
+                    else
+                    { Console.WriteLine("장착하거나 해제할 수 없는 아이템입니다."); }
+                }
+                else { WriteInputError(); }
+            }
+        }
+
+        // visit shop - show shop page
+        // end game
+        private void EndGame()
+        {
+            Console.WriteLine("게임을 종료합니다.");
+        }
+    }
+
+    // class player
+    class Player
+    {
+        public string Name { get; }  // player name
+        public int Level { get; }  // player level
+        public string Job { get; }  // player job
+        public int Attack { get; set; }  // player attack
+        public int Defense { get; set; }  // player defense
+        public int Health { get; private set; }  // player health
+        public int Gold { get; }  // player gold
+
+        public List<Item> inventory;  // player inventory
+
+        // initiate class
+        public Player(string name, int level, string job, int attack, int defense, int health, int gold)
+        {
+            Name = name; Level = level; Job = job; Attack = attack; Defense = defense; Health = health; Gold = gold;
+            inventory = new List<Item>();
+        }
+
+        // inventory methods
+        // add item to inventory
+        public void AddItem(Item item) { inventory.Add(item); }
+        // use item from inventory
+        public void UseItem(Item item)
+        {
+            // check if item is usable
+            if (item is IUsable usableItem)
+            {
+                // use item
+                usableItem.Use(this);
+            }
+        }
+        // unUse item
+        public void UnUseItem(Item item)
+        {
+            // check if item is usable
+            if (item is IUsable usableItem)
+            {
+                // unuse item
+                usableItem.UnUse(this);
+            }
+        }
+    }
+
+    // class item
+
+    abstract class Item
+    {
+        public string Name { get; }  // item name
+        public string Desc { get; }  // item description
+        public ItemType Type { get; }  // item type
+        
+        // initialize
+        protected Item(string name, string desc, ItemType type)
+        {
+            Name = name; Desc = desc; Type = type;
+        }
+    }
+    // types of item
+    enum ItemType { Weapon, Armor, Potion, Misc }
+
+    interface IUsable
+    {
+        void Use(Player player);
+        void UnUse(Player player);
+    }
+
+    interface IEquipable
+    {
+        public bool Equip { get; }
+    }
+
+    class Weapon: Item, IUsable, IEquipable
+    {
+        public int Bonus { get; set; }
+        public bool Equip { get; set; }
+
+        // initialize // base class Item
+        public Weapon(string name, string desc, int bonus, bool equip): base(name, desc, ItemType.Weapon)
+        {
+            Bonus = bonus; Equip = equip; 
+        }
+        
+        // use (equip) weapon
+        public void Use(Player player)
+        {
+            Equip = !Equip;
+            player.Attack += Bonus;
+            Console.WriteLine($"{Name}을(를) 장비했습니다. 공격이 {Bonus} 만큼 증가했습니다.");
+        }
+        // unuse (unequip) weapon
+        public void UnUse(Player player)
+        {
+            Equip = !Equip;
+            player.Attack -= Bonus;
+            Console.WriteLine($"{Name}을(를) 해제했습니다. 공격이 {Bonus} 만큼 감소했습니다."); 
+        }
+    }
+
+    class Armor : Item, IUsable, IEquipable
+    {
+        public int Bonus { get; set; }
+        public bool Equip { get; set; }
+
+        // initialize // base class Item
+        public Armor(string name, string desc, int bonus, bool equip) : base(name, desc, ItemType.Armor)
+        {
+            Bonus = bonus; Equip = equip;
+        }
+
+        // use(equip) armor
+        public void Use(Player player)
+        {
+            Equip = !Equip;
+            player.Defense += Bonus;
+            Console.WriteLine($"{Name}을(를) 장비했습니다. 방어가 {Bonus} 만큼 증가했습니다.");
+        }
+        // unuse (unequip) armor
+        public void UnUse(Player player)
+        {
+            Equip = !Equip;
+            player.Defense -= Bonus;
+            Console.WriteLine($"{Name}을(를) 해제했습니다. 방어가 {Bonus} 만큼 감소했습니다.");
         }
     }
 }
