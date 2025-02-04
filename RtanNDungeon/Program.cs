@@ -4,6 +4,8 @@ using System.Diagnostics.Tracing;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading.Tasks.Dataflow;
 
 namespace RtanNDungeon
 {
@@ -123,7 +125,9 @@ namespace RtanNDungeon
             player = new Player(name, 1, job, defaultStatus[0], defaultStatus[1], defaultStatus[2], 1000);
             // give default items (and use (equip) them)
             player.AddItem(ItemDB.GetItem("나무 막대"));
+            player.UseItem(ItemDB.GetItem("나무 막대"),true);
             player.AddItem(ItemDB.GetItem("흰 셔츠"));
+            player.UseItem(ItemDB.GetItem("흰 셔츠"), true);
 
             // after initializing ended
             WriteBlankLine();
@@ -573,11 +577,15 @@ namespace RtanNDungeon
 
         public List<Item> inventory;  // player inventory
 
+        public Weapon equippedWeapon { get; set; }  // weapon class item player equipped
+        public Armor equippedArmor { get; set; }  // armor class item player equipped
+
         // initiate class
         public Player(string name, int level, string job, int attack, int defense, int health, int gold)
         {
             Name = name; Level = level; Job = job; Attack = attack; Defense = defense; Health = health; Gold = gold;
             inventory = new List<Item>();
+            equippedWeapon = null; equippedArmor = null;
         }
 
         // inventory methods
@@ -586,13 +594,13 @@ namespace RtanNDungeon
         // remove item from inventory
         public void RemoveItem(Item item) { inventory.Remove(item); }
         // use item from inventory
-        public void UseItem(Item item)
+        public void UseItem(Item item, bool isSilence = false)
         {
             // check if item is usable
             if (item is IUsable usableItem)
             {
                 // use item
-                usableItem.Use(this);
+                usableItem.Use(this, isSilence);
             }
         }
     }
@@ -617,7 +625,7 @@ namespace RtanNDungeon
 
     interface IUsable
     {
-        void Use(Player player);
+        void Use(Player player, bool isSilent = false);
     }
 
     interface IEquipable
@@ -637,19 +645,39 @@ namespace RtanNDungeon
         }
 
         // merged function of use & unuse (equip & unequip) weapon
-        public void Use(Player player)
+        public void Use(Player player, bool isSilent = false)
         {
             // convert Equip into marks
             // initializing mark-values to when item is not equiped
             int markBonus = -1;
             string markEquip = "해제";
+
+            // when it is equipment process (from false Equip to true Equip)
+            // check if player already equipped weapon (player.equippedWeapon)
             // if Equip, mark minus // if !Equip, mark plus
-            if (!Equip) { markBonus = 1; markEquip = "장비"; }
+            if (!Equip)
+            {
+                if (player.equippedWeapon == null)
+                {
+                    markBonus = 1; markEquip = "장비";
+                    player.equippedWeapon = this;
+                }
+                else
+                {
+                    Console.WriteLine($"{Name} 아이템을 장비할 수 없습니다. 이미 무기가 장비되어 있습니다.");
+                    return;
+                }
+            }
             
             Equip = !Equip;
             player.Attack += markBonus * Bonus;
-
-            Console.WriteLine($"{Name} 장비를 {markEquip}했습니다. 공격이 {markBonus * Bonus} 만큼 변화했습니다.");
+            // completion message
+            // show only !isSilent
+            if (!isSilent)
+            {
+                Console.WriteLine();
+                Console.WriteLine($"{Name} 장비를 {markEquip}했습니다. 공격이 {markBonus * Bonus} 만큼 변화했습니다.");
+            }
         }
     }
 
@@ -665,19 +693,39 @@ namespace RtanNDungeon
         }
 
         // use(equip) armor
-        public void Use(Player player)
+        public void Use(Player player, bool isSilent = false)
         {
             // convert Equip into marks
             // initializing mark-values to when item is not equiped
             int markBonus = -1;
             string markEquip = "해제";
+
+            // when it is equipment process (from false Equip to true Equip)
+            // check if player already equipped weapon (player.equippedWeapon)
             // if Equip, mark minus // if !Equip, mark plus
-            if (!Equip) { markBonus = 1; markEquip = "장비"; }
+            if (!Equip)
+            {
+                if (player.equippedArmor == null)
+                {
+                    markBonus = 1; markEquip = "장비";
+                    player.equippedArmor = this;
+                }
+                else
+                {
+                    Console.WriteLine($"{Name} 아이템을 장비할 수 없습니다. 이미 방어구가 장비되어 있습니다.");
+                    return;
+                }
+            }
 
             Equip = !Equip;
             player.Defense += markBonus * Bonus;
-
-            Console.WriteLine($"{Name} 장비를 {markEquip}했습니다. 방어가 {markBonus * Bonus} 만큼 변화했습니다.");
+            // completion message
+            // show only !isSilent
+            if (!isSilent)
+            {
+                Console.WriteLine();
+                Console.WriteLine($"{Name} 장비를 {markEquip}했습니다. 방어가 {markBonus * Bonus} 만큼 변화했습니다.");
+            }
         }
     }
 
@@ -709,8 +757,8 @@ namespace RtanNDungeon
         {
             items = new Dictionary<string, Item>
             {
-                { "나무 막대", new Weapon("나무 막대", "길에서 주운 단단한 나무 막대기입니다.", 0, true, 0) },  // default weapon
-                { "흰 셔츠", new Armor("흰 셔츠", "집에서 입고 나온 흰 셔츠입니다.", 0, true, 0) },  // default armor
+                { "나무 막대", new Weapon("나무 막대", "길에서 주운 단단한 나무 막대기입니다.", 0, false, 0) },  // default weapon
+                { "흰 셔츠", new Armor("흰 셔츠", "집에서 입고 나온 흰 셔츠입니다.", 0, false, 0) },  // default armor
                 { "낡은 검", new Weapon("낡은 검", "누군가 사용한 적이 있는 낡은 검입니다.", 2, false, 100) },
                 { "천 갑옷", new Armor("천 갑옷", "마을 사람들이 쉽게 만들 수 있는 천 갑옷입니다.", 2, false, 100) },
                 { "철검", new Weapon("철검", "마을 대장장이가 만든 가장 기본적인 검입니다.", 5, false, 200) },
