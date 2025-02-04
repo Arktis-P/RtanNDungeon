@@ -62,8 +62,7 @@ namespace RtanNDungeon
                 WriteBlankLine();
                 Console.WriteLine("이곳은 르탄향 중심지입니다. 르탄궁으로 향하기 전에 준비를 할 수 있습니다.\n무엇을 하시겠습니까?");
                 WriteBlankLine();
-                Console.WriteLine("[1] 상태보기\t[2] 인벤토리\t[3] 상점방문\t[4] 여관방문\t[99] 게임종료");
-                // add later [4] rest [5] to dungeon
+                Console.WriteLine("[1] 상태보기\t[2] 인벤토리\t[3] 상점방문\t[4] 여관방문\t[5] 던전입장\t[99] 게임종료");
 
                 // get player's input (int only, in string value)
                 string input = Console.ReadLine();
@@ -73,7 +72,7 @@ namespace RtanNDungeon
                     case "2": ShowInventory(); break;  // check inventory
                     case "3": VisitShop(); break;  // visit shop
                     case "4": VisitInn();  break;  // take a rest
-                    case "5": break;  // explore dungeon
+                    case "5": EnterDungeonPage(); break;  // explore dungeon
                     case "99": EndGame(); return;  // end game
                     default: WriteInputError(); break;  // wrong input
                 }
@@ -556,6 +555,37 @@ namespace RtanNDungeon
             }
         }
 
+        // enter dugeon page
+        private void EnterDungeonPage()
+        {
+            while (true)
+            {
+                Dungeon dungeon = new Dungeon();
+                // show default message
+                WriteBlankLine();
+                Console.WriteLine("\t==== 던전입장 ====");
+                Console.WriteLine("여러 난이도의 던전에 입장할 수 있습니다.\n클리어에 성공한다면 보상을 받을 수 있습니다.");
+                // show options (difficulty)
+                WriteBlankLine();
+                Console.WriteLine("[1] Easy\t[2] Normal\t[3] Hard\t[0] 나가기");
+
+                // get pl's input
+                string input = Console.ReadLine();
+
+                switch (input)
+                {
+                    case "1":
+                        dungeon.EnterDungeon(player, DungeonDifficulty.Easy); return;
+                    case "2":
+                        dungeon.EnterDungeon(player, DungeonDifficulty.Normal); return;
+                    case "3":
+                        dungeon.EnterDungeon(player, DungeonDifficulty.Hard); return;
+                    case "0": StartMenu(); break;
+                    default: WriteInputError(); break;
+                }
+            }
+        }
+
         // end game
         private void EndGame()
         {
@@ -568,12 +598,16 @@ namespace RtanNDungeon
     class Player
     {
         public string Name { get; }  // player name
-        public int Level { get; }  // player level
+        public int Level { get; set; }  // player level
         public string Job { get; }  // player job
         public int Attack { get; set; }  // player attack
         public int Defense { get; set; }  // player defense
         public int Health { get; set; }  // player health
         public int Gold { get; set; }  // player gold
+        public int Xp { get; set; }  // player exp point
+
+        public int MaxHealth { get; }  // max of player health
+        public int LevelXp { get; }  // exp point for level up
 
         public List<Item> inventory;  // player inventory
 
@@ -583,7 +617,8 @@ namespace RtanNDungeon
         // initiate class
         public Player(string name, int level, string job, int attack, int defense, int health, int gold)
         {
-            Name = name; Level = level; Job = job; Attack = attack; Defense = defense; Health = health; Gold = gold;
+            Name = name; Level = level; Job = job; Attack = attack; Defense = defense; Health = health; Gold = gold; Xp = 0;
+            MaxHealth = 100; LevelXp = 100 * level;
             inventory = new List<Item>();
             equippedWeapon = null; equippedArmor = null;
         }
@@ -602,6 +637,26 @@ namespace RtanNDungeon
                 // use item
                 usableItem.Use(this, isSilence);
             }
+        }
+        // up player's level
+        public void LevelUp()
+        {
+            // increase player's level by 1
+            Level++;
+            // initiate player's XP to 0
+            Xp = 0;
+            // increase attack and defense by 1 each
+            Attack++; Defense++;
+            // restore health to its max
+            Health = 100;
+            // show congrats msg
+            Console.WriteLine();
+            Console.WriteLine($"축하합니다! {Name}의 레벨이 올랐습니다! (현재 {Level} 레벨)");
+        }
+        // check if level up is available
+        public void CheckLevelUp()
+        {
+            if (Xp >= LevelXp) { LevelUp(); }
         }
     }
 
@@ -787,4 +842,83 @@ namespace RtanNDungeon
             return new List<Item>(items.Values);
         }
     }
+
+    // class dungeon
+    class Dungeon
+    {
+        // required defense for each difficulty (dynamic value to player's level)
+        private Dictionary<DungeonDifficulty, int> DifficultyDefenseDict = new Dictionary<DungeonDifficulty, int>
+        {
+            { DungeonDifficulty.Easy, 5 }, { DungeonDifficulty.Normal, 10 }, { DungeonDifficulty.Hard, 20 }
+        };
+        // reward for each difficulty clear (static value)
+        private Dictionary<DungeonDifficulty, int> DifficultyRewardDict = new Dictionary<DungeonDifficulty, int>
+        {
+            { DungeonDifficulty.Easy, 15 }, { DungeonDifficulty.Normal, 50 }, { DungeonDifficulty.Hard, 200 }
+        };
+        // exp reward for each difficulty clear (dynamic value to player's level)
+        private Dictionary<DungeonDifficulty, int> DifficultyExpDict = new Dictionary<DungeonDifficulty, int>
+        {
+            { DungeonDifficulty.Easy, 25 }, { DungeonDifficulty.Normal, 50 }, { DungeonDifficulty.Hard, 100 }
+        };
+
+        // enter Dungeon
+        public void EnterDungeon(Player player, DungeonDifficulty difficulty)
+        {
+            Random rand = new Random();
+
+            bool isClear;
+
+            // initiate dungeon variables
+            int difficultyDefense = DifficultyDefenseDict[difficulty] + (player.Level - 1);  // dungeon's defense
+            int difficultyReward = DifficultyRewardDict[difficulty];  // dungeon's reward
+            int difficultyXp = DifficultyExpDict[difficulty] * player.Level;  // dungeon's xp reward
+
+            // show enter message
+            Console.WriteLine();
+            Console.WriteLine($"{difficulty} 난이도 던전에 입장했습니다. 행운을 빕니다.");
+
+            // calculate % for dungeon clear
+            // if player's defense is lower than dungeon's defense, fail in p of 50%
+            if (player.Defense < difficultyDefense && rand.Next(0, 1) < 0.5f ) { isClear = false; }
+            else { isClear = true; }
+            // show result
+            if (!isClear)
+            {
+                // decrease player's health by 50
+                player.Health -= 50;
+                if (player.Health < 0) { player.Health = 0; }
+                // if fail, show fail message
+                Console.WriteLine();
+                Console.WriteLine("던전 클리어에 실패했습니다.");
+                Console.WriteLine($"당신의 체력이 50 만큼 감소했습니다. (현재 체력:{player.Health})");
+            }
+            // if clear, give reward & Xp, show clear message
+            else if (isClear)
+            {
+                // decrease player's health
+                int healthDecrease = 25 + (int)rand.Next(-5, 5) + (difficultyDefense - player.Defense);
+                player.Health -= healthDecrease;
+                // give reward
+                int rewardIncrease = difficultyReward * (1 + rand.Next(player.Attack, player.Attack * 2) / 100);
+                player.Gold += rewardIncrease;
+                // give xp reward
+                int xpIncrease = difficultyXp * (1 + rand.Next(player.Attack, player.Attack * 2) / 100);
+                player.Xp += xpIncrease;
+
+                // show clear message
+                Console.WriteLine();
+                Console.WriteLine($"축하합니다! {difficulty} 난이도 던전을 클리어했습니다!");
+                Console.WriteLine($"당신의 체력은 {healthDecrease} 만큼 감소했습니다. (현재 체력:{player.Health})");
+                Console.WriteLine($"{rewardIncrease} G와 {xpIncrease} XP를 획득했습니다. (현재 잔고: {player.Gold}, 현재 XP: {player.Xp}/{player.LevelXp})");
+
+                // check levelup
+                player.CheckLevelUp();
+            }
+        }
+
+    }
+
+    // dungeon difficulty
+    enum DungeonDifficulty { Easy, Normal, Hard }
 }
