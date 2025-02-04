@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Diagnostics.Tracing;
 using System.Runtime.InteropServices;
 
@@ -24,6 +25,7 @@ namespace RtanNDungeon
     class Game
     {
         private Player player;
+        private Shop shop;
 
         private bool isName = false;
         private bool isJob = false;
@@ -38,6 +40,7 @@ namespace RtanNDungeon
         {
             ShowIntroduction();  // show game introduction
             InitializePlayer();  // initialize character ([later] load player data from storage)
+            InitializeShop();  // initialize shop
             StartMenu(); // show start page menu
         }
         // show game introduction
@@ -64,7 +67,7 @@ namespace RtanNDungeon
                 {
                     case "1": ShowStatus(); break;  // check status
                     case "2": ShowInventory(); break;  // check inventory
-                    case "3": break;  // visit shop
+                    case "3": VisitShop(); break;  // visit shop
                     case "4": break;  // take a rest
                     case "5": break;  // explore dungeon
                     case "99": EndGame(); return;  // end game
@@ -115,7 +118,13 @@ namespace RtanNDungeon
             // set player's status by job
             int[] defaultStatus = SetPlayerStatus(jobId);
             // set player class object
-            player = new Player(name, 1, job, defaultStatus[0], defaultStatus[1], defaultStatus[2], 0);
+            player = new Player(name, 1, job, defaultStatus[0], defaultStatus[1], defaultStatus[2], 1000);
+            // give default item
+            player.AddItem(new Weapon("나무 막대", "길에서 주운 단단한 나무 막대기입니다.", 0, true, 0));
+            player.AddItem(new Armor("흰 셔츠", "집에서 입고 나온 흰 셔츠입니다.", 0, true, 0));
+
+            // after initializing ended
+            Console.WriteLine("다시 한 번 환영합니다, {0} 님!", player.Name );
         }
         // set player's name
         private string SetPlayerName(string name)
@@ -123,7 +132,9 @@ namespace RtanNDungeon
             while (!isName)
             {
                 WriteBlankLine();
-                Console.WriteLine("당신의 이름을 입력해주세요:");
+                Console.WriteLine("마을에 들어가기 위해서는 당신의 신상정보가 필요합니다.");
+                Console.WriteLine("먼저, 당신의 이름을 알려주세요:");
+                WriteBlankLine();
                 name = Console.ReadLine();
                 // check player's name
                 // check if player didn't input anything
@@ -150,8 +161,7 @@ namespace RtanNDungeon
             while (!isJob)
             {
                 WriteBlankLine();
-                Console.WriteLine("당신의 직업을 선택해주세요.");
-                WriteBlankLine();
+                Console.WriteLine("당신의 직업을 무엇입니까?");
                 Console.WriteLine("[1] 전사\t[2] 궁수");
 
                 // check player's job
@@ -161,8 +171,7 @@ namespace RtanNDungeon
                     // if warrior
                     case "1":
                         WriteBlankLine();
-                        Console.WriteLine("전사를 선택하셨습니다. 맞나요?");
-                        WriteBlankLine();
+                        Console.WriteLine("정말로 전사가 맞나요?");
                         Console.WriteLine("[1] 예\t[2] 아니오");
                         string inputW = Console.ReadLine();
                         switch (inputW)
@@ -177,8 +186,7 @@ namespace RtanNDungeon
                     // if archer (not embodied)
                     case "2":
                         WriteBlankLine();
-                        Console.WriteLine("궁수를 선택하셨습니다. 맞나요?");
-                        WriteBlankLine();
+                        Console.WriteLine("정말로 궁수가 맞나요?");
                         Console.WriteLine("[1] 예\t[2] 아니오");
                         string inputA = Console.ReadLine();
                         switch (inputA)
@@ -209,13 +217,25 @@ namespace RtanNDungeon
                     break;
                 // if archer
                 case 2:
-                    attack = 20; defense = 5; health = 100;
+                    attack = 15; defense = 5; health = 100;
+                    break;
+                // default
+                default:
+                    attack = 10; defense = 10; health = 100;
                     break;
             }
 
             // set status
             int[] status = new int[3] { attack, defense, health };
             return status;
+        }
+        // initialize shop
+        private void InitializeShop()
+        {
+            shop = new Shop();
+            // add initial items to shop's item list
+            shop.AddItem(new Weapon("낡은 검", "마을에서 쉽게 볼 수 있는 낡은 검입니다.", 2, false, 500));
+            shop.AddItem(new Armor("천 갑옷", "마을 사람들이 쉽게 만들 수 있는 천 갑옷입니다.", 2, false, 500));
         }
         // check inventory - show player's inventory
         private void ShowInventory()
@@ -249,18 +269,19 @@ namespace RtanNDungeon
             List<Item> inven = player.inventory;
             
             // if inventory is empty
-            if (inven.Count == 0) { Console.WriteLine("\t인벤토리가 비어 있습니다."); }
+            if (inven.Count == 0) { Console.WriteLine("  인벤토리가 비어 있습니다."); }
             // else
             else
             {
-                string itemNumber = "";
-                string equiped = "";
-                string bonusLabel = "";
                 for (int i = 0; i < inven.Count; i++)
                 {
+                    // initiating variables
+                    string itemNumber = "-";
+                    string equiped = "";
+                    string bonusLabel = "";
+
                     // check if manage page
                     if (isManaging) { itemNumber = $"[{i + 1}]"; }
-                    else { itemNumber = "-"; }
                     // check if equiped already
                     if (inven[i] is IEquipable equipItem && equipItem.Equip) { equiped = "(E)"; }
                     // check item bonus
@@ -277,10 +298,10 @@ namespace RtanNDungeon
             while (true)
             {
                 WriteBlankLine();
-                Console.WriteLine("\t\t==== 장착관리 ====");
+                Console.WriteLine("\t\t==== 인벤토리 - 장착관리 ====");
                 Console.WriteLine("보유 중인 아이템을 장착하거나 해제할 수 있습니다.");
                 WriteBlankLine();
-                Console.WriteLine("\t\t[보유 아이템 목록]");
+                Console.WriteLine("\t[보유 아이템 목록]");
                 // show the list of items
                 ShowItemList(true);
                 WriteBlankLine();
@@ -294,10 +315,10 @@ namespace RtanNDungeon
                 else if (int.TryParse(input, out int itemNumber) && itemNumber > 0 && itemNumber <= player.inventory.Count)
                 {
                     // check if item is equiped or not
-                    if (player.inventory[itemNumber] is IEquipable equipItem)
+                    if (player.inventory[itemNumber - 1] is IEquipable equipItem)
                     {
-                        if (!equipItem.Equip) { player.UnUseItem(player.inventory[itemNumber]); }
-                        else { player.UseItem(player.inventory[itemNumber]); }
+                        if (equipItem.Equip) { player.UnUseItem(player.inventory[itemNumber - 1]); }
+                        else { player.UseItem(player.inventory[itemNumber - 1]); }
                     }
                     else
                     { Console.WriteLine("장착하거나 해제할 수 없는 아이템입니다."); }
@@ -307,10 +328,126 @@ namespace RtanNDungeon
         }
 
         // visit shop - show shop page
+        private void VisitShop()
+        {
+            while (true)
+            {
+                WriteBlankLine();
+                Console.WriteLine("\t\t==== 상점 ====");
+                Console.WriteLine("필요한 아이템을 구매하거나 가지고 있는 아이템을 판매할 수 있습니다.");
+                WriteBlankLine();
+                Console.WriteLine("[1] 구매하기\t[2] 판매하기\t[0] 나가기");
+
+                // get player's input
+                string input = Console.ReadLine();
+                switch (input)
+                {
+                    // buy item
+                    case "1": BuyItemPage(); break;
+                    // sell item ([later])
+                    case "2": SellItemPage(); break;
+                    // exit shop
+                    case "0": StartMenu(); break;
+                    default: WriteInputError(); break;
+                }
+            }
+        }
+        // item buying page
+        private void BuyItemPage()
+        {
+            while (true)
+            {
+                WriteBlankLine();
+                Console.WriteLine("\t\t==== 상점 - 구매 ====");
+                Console.WriteLine("필요한 아이템을 구매할 수 있습니다.");
+                WriteBlankLine();
+                Console.WriteLine("\t[구매 가능한 아이템 목록]");
+                ShowShopItemList();
+                WriteBlankLine();
+                Console.WriteLine("[0] 나가기");
+
+                // get player's input
+                string input = Console.ReadLine();
+                // if 0, exit
+                if (input == "0") { VisitShop(); break; }
+                // if in list.count, buy
+                else if (int.TryParse(input, out int itemNumber) && itemNumber > 0 && itemNumber <= shop.items.Count)
+                {
+                    BuyItem(shop.items[itemNumber - 1]);
+                }
+                else { WriteInputError(); break; }
+            }
+        }
+        // show shop's item list (buy menu)
+        private void ShowShopItemList()
+        {
+            List<Item> inven = shop.items;
+            // list up shop's item list
+            // if item list is empty
+            if (inven.Count == 0) { Console.WriteLine("  구매 가능한 아이템 목록이 비어 있습니다."); }
+            // else
+            else
+            {
+                string itemNumber = "";
+                string bonusLabel = "";
+                string itemPrice = "";
+                for (int i = 0; i < inven.Count; i++)
+                {
+                    itemNumber = $"[{i + 1}]";
+                    // check item bonus
+                    if (inven[i] is Weapon weaponItem) { bonusLabel = $"공격 +{weaponItem.Bonus}"; }
+                    else if (inven[i] is Armor armorItem) { bonusLabel = $"방어 +{armorItem.Bonus}"; }
+                    // check if already bought
+                    if (player.inventory.Contains(inven[i])) { itemPrice = "품절"; }
+                    else { itemPrice = $"{inven[i].Price} G"; }
+
+                    Console.WriteLine($"{itemNumber} {inven[i].Name}\t| {bonusLabel}\t| {inven[i].Desc}\t| {itemPrice}");
+                }
+            }
+        }
+        // buy item
+        private void BuyItem(Item item)
+        {
+            // check if already have
+            if (player.inventory.Contains(item)) { Console.WriteLine("이미 가지고 있는 아이템입니다."); }
+            // check if enough gold
+            else if (player.Gold < item.Price) { Console.WriteLine("가지고 있는 골드가 부족합니다."); }
+            else
+            {
+                // subtract player's gold
+                player.Gold -= item.Price;
+                // add to player's inventory
+                player.AddItem(item);
+                Console.WriteLine($"{item.Name}을(를) 구매했습니다. 당신의 잔고는 {player.Gold} 입니다.");
+            }
+            BuyItemPage();
+        }
+
+        // item selling page
+        private void SellItemPage()
+        {
+            while (true)
+            {
+                WriteBlankLine();
+                Console.WriteLine("\t\t==== 상점 - 판매 ====");
+                Console.WriteLine("가지고 있는 아이템을 판매할 수 있습니다.");
+                WriteBlankLine();
+                Console.WriteLine("아이템 판매 기능은 구현되어 있지 않습니다.");  // [later] show player's item list
+                WriteBlankLine();
+                Console.WriteLine("[0] 나가기");
+
+                // get player's input
+                string input = Console.ReadLine();
+                if (input == "0") { VisitShop(); break; }
+                else { WriteInputError(); break; }
+            }
+        }
+
         // end game
         private void EndGame()
         {
             Console.WriteLine("게임을 종료합니다.");
+            Environment.Exit(0);  // normal exit
         }
     }
 
@@ -323,7 +460,7 @@ namespace RtanNDungeon
         public int Attack { get; set; }  // player attack
         public int Defense { get; set; }  // player defense
         public int Health { get; private set; }  // player health
-        public int Gold { get; }  // player gold
+        public int Gold { get; set; }  // player gold
 
         public List<Item> inventory;  // player inventory
 
@@ -337,6 +474,8 @@ namespace RtanNDungeon
         // inventory methods
         // add item to inventory
         public void AddItem(Item item) { inventory.Add(item); }
+        // remove item from inventory
+        public void RemoveItem(Item item) { inventory.Remove(item); }
         // use item from inventory
         public void UseItem(Item item)
         {
@@ -366,11 +505,12 @@ namespace RtanNDungeon
         public string Name { get; }  // item name
         public string Desc { get; }  // item description
         public ItemType Type { get; }  // item type
+        public int Price { get; }  // item price
         
         // initialize
-        protected Item(string name, string desc, ItemType type)
+        protected Item(string name, string desc, ItemType type, int price)
         {
-            Name = name; Desc = desc; Type = type;
+            Name = name; Desc = desc; Type = type; Price = price;
         }
     }
     // types of item
@@ -384,7 +524,7 @@ namespace RtanNDungeon
 
     interface IEquipable
     {
-        public bool Equip { get; }
+        public bool Equip { get; set; }
     }
 
     class Weapon: Item, IUsable, IEquipable
@@ -393,7 +533,7 @@ namespace RtanNDungeon
         public bool Equip { get; set; }
 
         // initialize // base class Item
-        public Weapon(string name, string desc, int bonus, bool equip): base(name, desc, ItemType.Weapon)
+        public Weapon(string name, string desc, int bonus, bool equip, int price): base(name, desc, ItemType.Weapon, price)
         {
             Bonus = bonus; Equip = equip; 
         }
@@ -420,7 +560,7 @@ namespace RtanNDungeon
         public bool Equip { get; set; }
 
         // initialize // base class Item
-        public Armor(string name, string desc, int bonus, bool equip) : base(name, desc, ItemType.Armor)
+        public Armor(string name, string desc, int bonus, bool equip, int price) : base(name, desc, ItemType.Armor, price)
         {
             Bonus = bonus; Equip = equip;
         }
@@ -440,4 +580,18 @@ namespace RtanNDungeon
             Console.WriteLine($"{Name}을(를) 해제했습니다. 방어가 {Bonus} 만큼 감소했습니다.");
         }
     }
+
+    // class shop
+    class Shop
+    {
+        public List<Item> items;
+
+        // initiate shop
+        public Shop() { items = new List<Item>(); }
+        // add item in shop's item list
+        public void AddItem(Item item) { items.Add(item); }
+        // remove item from shop's item list
+        public void RemoveItem(Item item) { items.Remove(item); }
+    }
+
 }
