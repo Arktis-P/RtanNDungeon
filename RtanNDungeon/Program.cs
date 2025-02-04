@@ -493,7 +493,7 @@ namespace RtanNDungeon
             if (item is IUsable usableItem)
             {
                 // unuse item
-                usableItem.UnUse(this);
+                usableItem.Use(this);
             }
         }
     }
@@ -519,7 +519,6 @@ namespace RtanNDungeon
     interface IUsable
     {
         void Use(Player player);
-        void UnUse(Player player);
     }
 
     interface IEquipable
@@ -537,20 +536,21 @@ namespace RtanNDungeon
         {
             Bonus = bonus; Equip = equip; 
         }
-        
-        // use (equip) weapon
+
+        // merged function of use & unuse (equip & unequip) weapon
         public void Use(Player player)
         {
+            // convert Equip into marks
+            // initializing mark-values to when item is not equiped
+            int markBonus = -1;
+            string markEquip = "해제";
+            // if Equip, mark minus // if !Equip, mark plus
+            if (!Equip) { markBonus = 1; }
+            
             Equip = !Equip;
-            player.Attack += Bonus;
-            Console.WriteLine($"{Name}을(를) 장비했습니다. 공격이 {Bonus} 만큼 증가했습니다.");
-        }
-        // unuse (unequip) weapon
-        public void UnUse(Player player)
-        {
-            Equip = !Equip;
-            player.Attack -= Bonus;
-            Console.WriteLine($"{Name}을(를) 해제했습니다. 공격이 {Bonus} 만큼 감소했습니다."); 
+            player.Attack += markBonus * Bonus;
+
+            Console.WriteLine($"{Name} 장비를 {markEquip}했습니다. 공격이 {markBonus * Bonus} 만큼 변화했습니다.");
         }
     }
 
@@ -568,16 +568,17 @@ namespace RtanNDungeon
         // use(equip) armor
         public void Use(Player player)
         {
+            // convert Equip into marks
+            // initializing mark-values to when item is not equiped
+            int markBonus = -1;
+            string markEquip = "해제";
+            // if Equip, mark minus // if !Equip, mark plus
+            if (!Equip) { markBonus = 1; }
+
             Equip = !Equip;
-            player.Defense += Bonus;
-            Console.WriteLine($"{Name}을(를) 장비했습니다. 방어가 {Bonus} 만큼 증가했습니다.");
-        }
-        // unuse (unequip) armor
-        public void UnUse(Player player)
-        {
-            Equip = !Equip;
-            player.Defense -= Bonus;
-            Console.WriteLine($"{Name}을(를) 해제했습니다. 방어가 {Bonus} 만큼 감소했습니다.");
+            player.Defense += markBonus * Bonus;
+
+            Console.WriteLine($"{Name} 장비를 {markEquip}했습니다. 방어가 {markBonus * Bonus} 만큼 변화했습니다.");
         }
     }
 
