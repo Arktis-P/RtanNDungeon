@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Diagnostics.Tracing;
+using System.IO.IsolatedStorage;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -62,7 +63,7 @@ namespace RtanNDungeon
                 WriteBlankLine();
                 Console.WriteLine("이곳은 르탄향 중심지입니다. 르탄궁으로 향하기 전에 준비를 할 수 있습니다.\n무엇을 하시겠습니까?");
                 WriteBlankLine();
-                Console.WriteLine("[1] 상태보기\t[2] 인벤토리\t[3] 상점방문\t[4] 여관방문\t[5] 던전입장\t[99] 게임종료");
+                Console.WriteLine("[1] 상태보기\t[2] 인벤토리\t[3] 상점방문\t[4] 여관방문\t[5] 던전입장\n[8] 게임저장\t[99] 게임종료");
 
                 // get player's input (int only, in string value)
                 string input = Console.ReadLine();
@@ -73,6 +74,8 @@ namespace RtanNDungeon
                     case "3": VisitShop(); break;  // visit shop
                     case "4": VisitInn();  break;  // take a rest
                     case "5": EnterDungeonPage(); break;  // explore dungeon
+                    case "8": SaveGame(); break;  // save game
+                    case "9": break;  // load game
                     case "99": EndGame(); return;  // end game
                     default: WriteInputError(); break;  // wrong input
                 }
@@ -107,30 +110,36 @@ namespace RtanNDungeon
         // initialize player
         private void InitializePlayer()
         {
-            // input player's name
-            string name = SetPlayerName("");
-            // select player's job
-            int jobId = SetPlayerJob(0);
-            string job;
-            switch (jobId)
-            {
-                case 1: job = "전사"; break;
-                case 2: job = "궁수"; break;
-                default: job = "전사"; break;
-            }
-            // set player's status by job
-            int[] defaultStatus = SetPlayerStatus(jobId);
-            // set player class object
-            player = new Player(name, 1, job, defaultStatus[0], defaultStatus[1], defaultStatus[2], 1000);
-            // give default items (and use (equip) them)
-            player.AddItem(ItemDB.GetItem("나무 막대"));
-            player.UseItem(ItemDB.GetItem("나무 막대"),true);
-            player.AddItem(ItemDB.GetItem("흰 셔츠"));
-            player.UseItem(ItemDB.GetItem("흰 셔츠"), true);
+            bool isFile = CheckLoadData();
 
-            // after initializing ended
-            WriteBlankLine();
-            Console.WriteLine("다시 한 번 환영합니다, {0} 님!", player.Name);
+            if (!isFile)
+            {
+                // input player's name
+                string name = SetPlayerName("");
+                // select player's job
+                int jobId = SetPlayerJob(0);
+                string job;
+                switch (jobId)
+                {
+                    case 1: job = "전사"; break;
+                    case 2: job = "궁수"; break;
+                    default: job = "전사"; break;
+                }
+                // set player's status by job
+                int[] defaultStatus = SetPlayerStatus(jobId);
+                // set player class object
+                player = new Player(name, 1, job, defaultStatus[0], defaultStatus[1], defaultStatus[2], 1000);
+                // give default items (and use (equip) them)
+                player.AddItem(ItemDB.GetItem("나무 막대"));
+                player.UseItem(ItemDB.GetItem("나무 막대"), true);
+                player.AddItem(ItemDB.GetItem("흰 셔츠"));
+                player.UseItem(ItemDB.GetItem("흰 셔츠"), true);
+
+                // after initializing ended
+                WriteBlankLine();
+                Console.WriteLine($"르탄향에 오신 것을 환영합니다, {player.Name} 님!");
+            }
+            else { return; }
         }
         // set player's name
         private string SetPlayerName(string name)
@@ -235,6 +244,82 @@ namespace RtanNDungeon
             int[] status = new int[3] { attack, defense, health };
             return status;
         }
+        // check if there's file to load
+        private bool CheckLoadData()
+        {
+            bool isFile = false;
+
+            // check if save file exists
+            // if exists, ask load or not
+            string filePath = "save.txt";
+            if (File.Exists(filePath))
+            {
+                while (true)
+                {
+                    WriteBlankLine();
+                    Console.WriteLine("저장된 데이터가 존재합니다. 불러올까요?");
+                    Console.WriteLine("[1] 예\t[2] 아니오");
+
+                    // get pl's input
+                    string input = Console.ReadLine();
+                    switch (input)
+                    {
+                        case "1": LoadData(); isFile = !isFile; return isFile;  // load player data
+                        case "2": return isFile;  // generate new player
+                        default: WriteInputError(); break;
+                    }
+                }
+            }
+            return isFile;
+        }
+        // load player data
+        private void LoadData()
+        {
+            string filePath = "save.txt";
+
+            // load save file
+            using (StreamReader reader = new StreamReader(filePath))
+            {
+                string name = reader.ReadLine();
+                int level = int.Parse(reader.ReadLine());
+                string job = reader.ReadLine();
+                int attack = int.Parse(reader.ReadLine());
+                int defense = int.Parse(reader.ReadLine());
+                int health = int.Parse(reader.ReadLine());
+                int gold = int.Parse(reader.ReadLine());
+                int xp = int.Parse(reader.ReadLine());
+
+                // load player object first with basic status
+                player = new Player(name, level, job, attack, defense, health, gold);
+
+                // load item inventory
+                // read how many in inventory
+                int inventoryCount = int.Parse(reader.ReadLine());
+                for (int i = 0; i < inventoryCount; i++)
+                {
+                    string itemName = reader.ReadLine();
+                    Item item = ItemDB.GetItem(itemName);
+                    if (item != null) { player.AddItem(item); }
+                }
+                // load equipped items
+                string equippedWaponName = reader.ReadLine();
+                if (equippedWaponName != "None")
+                {
+                    player.equippedWeapon = (Weapon)ItemDB.GetItem(equippedWaponName);
+                    player.UseItem(player.equippedWeapon, true);
+                }
+                string equippedArmorName = reader.ReadLine();
+                if (equippedArmorName != "None")
+                {
+                    player.equippedArmor = (Armor)ItemDB.GetItem(equippedArmorName);
+                    player.UseItem(player.equippedArmor, true);
+                }
+
+                Console.WriteLine();
+                Console.WriteLine($"다시 오신 것을 환영합니다. {player.Name} 님!");
+            }
+        }
+
         // initialize shop
         private void InitializeShop()
         {
@@ -586,6 +671,30 @@ namespace RtanNDungeon
             }
         }
 
+        // save game
+        private void SaveGame()
+        {
+            while (true)
+            {
+                WriteBlankLine();
+                Console.WriteLine("\t==== 게임저장 ====");
+                Console.WriteLine("게임을 저장하시겠습니까?");
+                // show options
+                WriteBlankLine();
+                Console.WriteLine("[1] 예\t[2] 아니오");
+
+                // get pl's input
+                string input = Console.ReadLine();
+
+                switch (input)
+                {
+                    case "1": player.SaveData(); break;  // save game
+                    case "2": StartMenu(); break;  // return to start menu
+                    default: WriteInputError(); break;
+                }    
+            }
+        }
+
         // end game
         private void EndGame()
         {
@@ -638,6 +747,8 @@ namespace RtanNDungeon
                 usableItem.Use(this, isSilence);
             }
         }
+
+        // player status methods
         // up player's level
         public void LevelUp()
         {
@@ -657,6 +768,28 @@ namespace RtanNDungeon
         public void CheckLevelUp()
         {
             if (Xp >= LevelXp) { LevelUp(); }
+        }
+
+        // player data methods
+        // save player data
+        public void SaveData()
+        {
+            string filePath = "save.txt";
+
+            // load save file
+            using (StreamWriter writer = new StreamWriter(filePath))
+            {
+                writer.WriteLine(Name); writer.WriteLine(Level); writer.WriteLine(Job);
+                writer.WriteLine(Attack); writer.WriteLine(Defense); writer.WriteLine(Health);
+                writer.WriteLine(Gold); writer.WriteLine(Xp);
+                // save item inventory
+                // first write inventory count (to load inventory from different line size)
+                writer.WriteLine(inventory.Count);
+                foreach (var item in inventory) { writer.WriteLine(item.Name); }
+                // save equip status
+                writer.WriteLine(equippedWeapon?.Name ?? "None");
+                writer.WriteLine(equippedArmor?.Name ?? "None");
+            }
         }
     }
 
