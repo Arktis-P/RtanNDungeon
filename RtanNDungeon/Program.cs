@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Diagnostics.Tracing;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace RtanNDungeon
@@ -248,7 +249,7 @@ namespace RtanNDungeon
                 WriteBlankLine();
                 Console.WriteLine("\t\t[보유 아이템 목록]");
                 // show the list of items
-                ShowItemList(false);
+                ShowItemList(false, false);
                 WriteBlankLine();
                 Console.WriteLine("[1] 장착 관리\t[0] 나가기");
 
@@ -264,7 +265,7 @@ namespace RtanNDungeon
             }
         }
         // show list of items
-        private void ShowItemList(bool isManaging)
+        private void ShowItemList(bool isManaging, bool isSelling)
         {
             List<Item> inven = player.inventory;
             
@@ -279,16 +280,19 @@ namespace RtanNDungeon
                     string itemNumber = "-";
                     string equiped = "";
                     string bonusLabel = "";
+                    string itemPrice = "";
 
-                    // check if manage page
+                    // check if on manage page
                     if (isManaging) { itemNumber = $"[{i + 1}]"; }
-                    // check if equiped already
+                    // check if item is equiped already
                     if (inven[i] is IEquipable equipItem && equipItem.Equip) { equiped = "(E)"; }
                     // check item bonus
                     if (inven[i] is Weapon weaponItem) { bonusLabel = $"공격 +{weaponItem.Bonus}"; }
                     else if (inven[i] is Armor armorItem) { bonusLabel = $"방어 +{armorItem.Bonus}"; }
+                    // check if on selling page
+                    if (isSelling) { itemPrice = $"\t| {(int)(inven[i].Price * 0.8f)}"; }
 
-                    Console.WriteLine($"{itemNumber} {equiped}{inven[i].Name}\t| {bonusLabel}\t| {inven[i].Desc}");
+                    Console.WriteLine($"{itemNumber} {equiped}{inven[i].Name}\t| {bonusLabel}\t| {inven[i].Desc}{itemPrice}");
                 }
             }
         }
@@ -303,7 +307,7 @@ namespace RtanNDungeon
                 WriteBlankLine();
                 Console.WriteLine("\t[보유 아이템 목록]");
                 // show the list of items
-                ShowItemList(true);
+                ShowItemList(true, false);
                 WriteBlankLine();
                 Console.WriteLine("[0] 나가기");
 
@@ -432,14 +436,63 @@ namespace RtanNDungeon
                 Console.WriteLine("\t\t==== 상점 - 판매 ====");
                 Console.WriteLine("가지고 있는 아이템을 판매할 수 있습니다.");
                 WriteBlankLine();
-                Console.WriteLine("아이템 판매 기능은 구현되어 있지 않습니다.");  // [later] show player's item list
+                Console.WriteLine("\t[판매 가능한 아이템 목록]");
+                ShowItemList(true, true);
                 WriteBlankLine();
                 Console.WriteLine("[0] 나가기");
 
                 // get player's input
                 string input = Console.ReadLine();
                 if (input == "0") { VisitShop(); break; }
+                else if (int.TryParse(input, out int itemNumber) && itemNumber > 0 && itemNumber <= player.inventory.Count)
+                {
+                    itemNumber--;
+                    SellItem(player.inventory[itemNumber]);
+                    break;
+                }
                 else { WriteInputError(); break; }
+            }
+        }
+        // sell item
+        private void SellItem(Item item)
+        {
+            // check if item is equiped
+            if (item is IEquipable equipItem && equipItem.Equip)
+            {
+                // warning message
+                WriteBlankLine();
+                Console.WriteLine("이 아이템은 판매할 수 없습니다. 먼저 장비를 해제해 주세요.");
+                // return to the last page
+                SellItemPage();
+            }
+            // confirmation message
+            else
+            {
+                while (true)
+                {
+                    int itemPrice = (int)(item.Price * 0.8f);
+                    WriteBlankLine();
+                    Console.WriteLine($"이 아이템을 판매하면 {itemPrice} G를 얻을 수 있습니다.");
+                    Console.WriteLine("정말 판매하시겠습니까?");
+                    Console.WriteLine("[1] 예\t[2] 아니오");
+
+                    // get player's input
+                    string input = Console.ReadLine();
+                    switch (input)
+                    {
+                        case "1":  // change item into gold (80% of price)
+                            // give gold
+                            player.Gold += itemPrice;
+                            // remove from inventory
+                            player.RemoveItem(item);
+                            // completion message
+                            WriteBlankLine();
+                            Console.WriteLine($"{item.Name}을(를) 판매해 {itemPrice} G를 얻었습니다. (현재 잔고: {player.Gold})");
+                            SellItemPage(); break;
+                        case "2": SellItemPage(); break;
+                        default: WriteInputError(); break;
+                    }
+                }
             }
         }
 
