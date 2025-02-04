@@ -545,7 +545,7 @@ namespace RtanNDungeon
             int markBonus = -1;
             string markEquip = "해제";
             // if Equip, mark minus // if !Equip, mark plus
-            if (!Equip) { markBonus = 1; }
+            if (!Equip) { markBonus = 1; markEquip = "장비"; }
             
             Equip = !Equip;
             player.Attack += markBonus * Bonus;
@@ -573,7 +573,7 @@ namespace RtanNDungeon
             int markBonus = -1;
             string markEquip = "해제";
             // if Equip, mark minus // if !Equip, mark plus
-            if (!Equip) { markBonus = 1; }
+            if (!Equip) { markBonus = 1; markEquip = "장비"; }
 
             Equip = !Equip;
             player.Defense += markBonus * Bonus;
