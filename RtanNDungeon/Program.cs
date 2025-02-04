@@ -59,7 +59,7 @@ namespace RtanNDungeon
                 WriteBlankLine();
                 Console.WriteLine("이곳은 르탄향 중심지입니다. 르탄궁으로 향하기 전에 준비를 할 수 있습니다.\n무엇을 하시겠습니까?");
                 WriteBlankLine();
-                Console.WriteLine("[1] 상태보기\t[2] 인벤토리\t[3] 상점\t[99] 게임종료");
+                Console.WriteLine("[1] 상태보기\t[2] 인벤토리\t[3] 상점방문\t[4] 여관방문\t[99] 게임종료");
                 // add later [4] rest [5] to dungeon
 
                 // get player's input (int only, in string value)
@@ -69,7 +69,7 @@ namespace RtanNDungeon
                     case "1": ShowStatus(); break;  // check status
                     case "2": ShowInventory(); break;  // check inventory
                     case "3": VisitShop(); break;  // visit shop
-                    case "4": break;  // take a rest
+                    case "4": VisitInn();  break;  // take a rest
                     case "5": break;  // explore dungeon
                     case "99": EndGame(); return;  // end game
                     default: WriteInputError(); break;  // wrong input
@@ -122,9 +122,7 @@ namespace RtanNDungeon
             player = new Player(name, 1, job, defaultStatus[0], defaultStatus[1], defaultStatus[2], 1000);
             // give default items (and use (equip) them)
             player.AddItem(ItemDB.GetItem("나무 막대"));
-            player.UseItem(ItemDB.GetItem("나무 막대"));
             player.AddItem(ItemDB.GetItem("흰 셔츠"));
-            player.UseItem(ItemDB.GetItem("흰 셔츠"));
 
             // after initializing ended
             WriteBlankLine();
@@ -445,6 +443,62 @@ namespace RtanNDungeon
             }
         }
 
+        // visit inn to take a rest
+        private void VisitInn()
+        {
+            while (true)
+            {
+                // show basic introduction for using Inn
+                WriteBlankLine();
+                Console.WriteLine("\t\t==== 여관 ====");
+                Console.WriteLine("필요하신 만큼 휴식을 취할 수 있는 공간 여관입니다!");
+                Console.WriteLine("일정 금액(100 G)을 지불하고 체력을 회복할 수 있습니다.");
+                // show inn menus
+                WriteBlankLine();
+                Console.WriteLine("[1] 휴식하기 \t[0] 나가기");
+
+                // get plyaer's input
+                string input = Console.ReadLine();
+                switch (input)
+                {
+                    case "1": TakeRest(); break;
+                    case "0": StartMenu(); break;
+                    default: WriteInputError(); break;
+                }
+            }
+        }
+        // take a rest
+        private void TakeRest()
+        {
+            // check if player has less than 100 G, cannot rest warning (short money)
+            if (player.Gold < 100)
+            {
+                // cannot warning
+                WriteBlankLine();
+                Console.WriteLine($"잔고가 부족합니다. 휴식에는 100 G가 필요합니다. (현재 잔고: {player.Gold})");
+                VisitInn();
+            }
+            // check if player has max health, cannot rest warning (max health)
+            else if (player.Health == 100)
+            {
+                WriteBlankLine();
+                Console.WriteLine("체력이 이미 최대치입니다. 휴식을 취할 필요가 없습니다.");
+                VisitInn();
+            }
+            // take a rest, restore player's health to max
+            else
+            {
+                // take 100 G off from player.Gold
+                player.Gold -= 100;
+                // give player max health (curr. 100 // [later] need max health value?)
+                player.Health = 100;
+                // show complete message
+                WriteBlankLine();
+                Console.WriteLine($"휴식을 취했습니다. 체력이 회복되었습니다. (현재 잔고: {player.Gold})");
+                VisitInn();
+            }
+        }
+
         // end game
         private void EndGame()
         {
@@ -461,7 +515,7 @@ namespace RtanNDungeon
         public string Job { get; }  // player job
         public int Attack { get; set; }  // player attack
         public int Defense { get; set; }  // player defense
-        public int Health { get; private set; }  // player health
+        public int Health { get; set; }  // player health
         public int Gold { get; set; }  // player gold
 
         public List<Item> inventory;  // player inventory
@@ -602,8 +656,8 @@ namespace RtanNDungeon
         {
             items = new Dictionary<string, Item>
             {
-                { "나무 막대", new Weapon("나무 막대", "길에서 주운 단단한 나무 막대기입니다.", 0, false, 0) },
-                { "흰 셔츠", new Armor("흰 셔츠", "집에서 입고 나온 흰 셔츠입니다.", 0, false, 0) },
+                { "나무 막대", new Weapon("나무 막대", "길에서 주운 단단한 나무 막대기입니다.", 0, true, 0) },  // default weapon
+                { "흰 셔츠", new Armor("흰 셔츠", "집에서 입고 나온 흰 셔츠입니다.", 0, true, 0) },  // default armor
                 { "낡은 검", new Weapon("낡은 검", "누군가 사용한 적이 있는 낡은 검입니다.", 2, false, 100) },
                 { "천 갑옷", new Armor("천 갑옷", "마을 사람들이 쉽게 만들 수 있는 천 갑옷입니다.", 2, false, 100) },
                 { "철검", new Weapon("철검", "마을 대장장이가 만든 가장 기본적인 검입니다.", 5, false, 200) },
