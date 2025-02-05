@@ -5,6 +5,7 @@ using System.IO.IsolatedStorage;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks.Dataflow;
 
@@ -656,20 +657,51 @@ namespace RtanNDungeon
 
                 // get pl's input
                 string input = Console.ReadLine();
+                bool isDead = false;
 
                 switch (input)
                 {
                     case "1":
-                        dungeon.EnterDungeon(player, DungeonDifficulty.Easy); return;
+                        isDead = dungeon.EnterDungeon(player, DungeonDifficulty.Easy);
+                        if (isDead) { Retry(); return; }
+                        return;
                     case "2":
-                        dungeon.EnterDungeon(player, DungeonDifficulty.Normal); return;
+                        isDead = dungeon.EnterDungeon(player, DungeonDifficulty.Normal);
+                        if (isDead) { Retry(); return; }
+                        return;
                     case "3":
-                        dungeon.EnterDungeon(player, DungeonDifficulty.Hard); return;
+                        isDead = dungeon.EnterDungeon(player, DungeonDifficulty.Hard);
+                        if (isDead) { Retry(); return; }
+                        return;
                     case "0": StartMenu(); break;
                     default: WriteInputError(); break;
                 }
             }
         }
+        private void Retry()
+        {
+            while (true)
+            {
+                WriteBlankLine();
+                DrawDivision();
+                Console.WriteLine("\t\t\t게임 오버!");
+                DrawDivision();
+                WriteBlankLine();
+                Console.WriteLine("다시 시작하시겠습니까?");
+                WriteBlankLine();
+                Console.WriteLine("[1] 예\t[2] 아니오");
+
+                // get player's input
+                string input = Console.ReadLine();
+                switch (input)
+                {
+                    case "1": Start(); return;  // to introduction
+                    case "2": EndGame(); return;  // end game
+                    default: WriteInputError(); break;
+                }
+            }
+        }
+
 
         // save game
         private void SaveGame()
@@ -768,6 +800,24 @@ namespace RtanNDungeon
         public void CheckLevelUp()
         {
             if (Xp >= LevelXp) { LevelUp(); }
+        }
+        // if player is dead
+        public void PlayerDeath()
+        {
+            // show death message
+            Console.WriteLine();
+            Console.WriteLine("아뿔싸! 당신은 던전 안에서 체력이 0이 되어 더 이상 빠져나올 수 없게 되었습니다...");
+            Console.WriteLine($"{Name}이(가) 죽었습니다.");
+            // show retry message
+            // if yes return to game
+            // if no end game
+        }
+        // check if player is dead
+        public bool CheckDeath()
+        {
+            bool isDead = false;
+            if (Health <= 0) { PlayerDeath(); return isDead = true; }
+            else { return isDead; }
         }
 
         // player data methods
@@ -996,11 +1046,12 @@ namespace RtanNDungeon
         };
 
         // enter Dungeon
-        public void EnterDungeon(Player player, DungeonDifficulty difficulty)
+        public bool EnterDungeon(Player player, DungeonDifficulty difficulty)
         {
             Random rand = new Random();
 
             bool isClear;
+            bool isDead = false;
 
             // initiate dungeon variables
             int difficultyDefense = DifficultyDefenseDict[difficulty] + (player.Level - 1);  // dungeon's defense
@@ -1025,6 +1076,9 @@ namespace RtanNDungeon
                 Console.WriteLine();
                 Console.WriteLine("던전 클리어에 실패했습니다.");
                 Console.WriteLine($"당신의 체력이 50 만큼 감소했습니다. (현재 체력:{player.Health})");
+
+                // check player death
+                isDead = player.CheckDeath();
             }
             // if clear, give reward & Xp, show clear message
             else if (isClear)
@@ -1039,6 +1093,10 @@ namespace RtanNDungeon
                 int xpIncrease = difficultyXp * (1 + rand.Next(player.Attack, player.Attack * 2) / 100);
                 player.Xp += xpIncrease;
 
+                // check player death
+                isDead = player.CheckDeath();
+                if (isDead) { return isDead; }
+
                 // show clear message
                 Console.WriteLine();
                 Console.WriteLine($"축하합니다! {difficulty} 난이도 던전을 클리어했습니다!");
@@ -1048,8 +1106,8 @@ namespace RtanNDungeon
                 // check levelup
                 player.CheckLevelUp();
             }
+            return isDead;
         }
-
     }
 
     // dungeon difficulty
