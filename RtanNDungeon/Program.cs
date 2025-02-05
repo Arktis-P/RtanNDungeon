@@ -34,11 +34,6 @@ namespace RtanNDungeon
         private bool isName = false;
         private bool isJob = false;
 
-        // common methods
-        private void DrawDivision() { Console.WriteLine("================================================================"); }  // draw division line using 64 x "="
-        private void WriteBlankLine() { Console.WriteLine(""); }
-        private void WriteInputError() { Console.WriteLine("!!!! 잘못된 입력입니다. 다시 선택해주세요."); }
-
         // when game starts: start page
         public void Start()
         {
@@ -50,18 +45,18 @@ namespace RtanNDungeon
         // show game introduction
         private void ShowIntroduction()
         {
-            DrawDivision();
+            Utility.DrawDivision();
             Console.WriteLine("텍스트 RPG의 세계, 르탄향에 오신 것을 환영합니다.");
-            DrawDivision();
+            Utility.DrawDivision();
         }
         // show start page menu
         private void StartMenu()
         {
             while (true)
             {
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("이곳은 르탄향 중심지입니다. 르탄궁으로 향하기 전에 준비를 할 수 있습니다.\n무엇을 하시겠습니까?");
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("[1] 상태보기\t[2] 인벤토리\t[3] 상점방문\t[4] 여관방문\t[5] 던전입장\n[8] 게임저장\t[99] 게임종료");
 
                 // get player's input (int only, in string value)
@@ -76,7 +71,7 @@ namespace RtanNDungeon
                     case "8": SaveGame(); break;  // save game
                     case "9": break;  // load game
                     case "99": EndGame(); return;  // end game
-                    default: WriteInputError(); break;  // wrong input
+                    default: Utility.WriteInputError(); break;  // wrong input
                 }
             }
         }
@@ -86,10 +81,10 @@ namespace RtanNDungeon
         {
             while (true)
             {
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("\t\t==== 상태보기 ====");
                 Console.WriteLine("캐릭터의 정보를 확인할 수 있습니다.");
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine($"이름: {player.Name} (레벨{player.Level} {player.Job})");  // player's name / level / job
                 Console.WriteLine($"공격: {player.Attack}\t방어: {player.Defense}\t체력: {player.Health}");  // player's attack / defense / health
                 Console.WriteLine($"잔고: {player.Gold}");  // player's gold
@@ -102,7 +97,7 @@ namespace RtanNDungeon
                 {
                     case "0": StartMenu(); break;
                     default:
-                        WriteInputError(); break;
+                        Utility.WriteInputError(); break;
                 }
             }
         }
@@ -135,7 +130,7 @@ namespace RtanNDungeon
                 player.UseItem(ItemDB.GetItem("흰 셔츠"), true);
 
                 // after initializing ended
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine($"르탄향에 오신 것을 환영합니다, {player.Name} 님!");
             }
             else { return; }
@@ -145,14 +140,14 @@ namespace RtanNDungeon
         {
             while (!isName)
             {
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("마을에 들어가기 위해서는 당신의 신상정보가 필요합니다.");
                 Console.WriteLine("먼저, 당신의 이름을 알려주세요:");
                 name = Console.ReadLine();
                 // check player's name
                 // check if player didn't input anything
                 if (name == null || name == "") { name = "당신"; }  // if null, set name 당신
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine($"당신의 이름은 {name} 입니다. 맞나요?");
                 Console.WriteLine("[1] 예\t[2] 아니오");
 
@@ -163,7 +158,7 @@ namespace RtanNDungeon
                     case "1": isName = true; break;
                     // if no, go back
                     case "2": break;
-                    default: WriteInputError(); break;
+                    default: Utility.WriteInputError(); break;
                 }
             }
             // if isName = true, return name
@@ -174,7 +169,7 @@ namespace RtanNDungeon
         {
             while (!isJob)
             {
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("당신의 직업을 무엇입니까?");
                 Console.WriteLine("[1] 전사\t[2] 궁수");
 
@@ -184,7 +179,7 @@ namespace RtanNDungeon
                 {
                     // if warrior
                     case "1":
-                        WriteBlankLine();
+                        Utility.WriteBlankLine();
                         Console.WriteLine("정말로 전사가 맞나요?");
                         Console.WriteLine("[1] 예\t[2] 아니오");
                         string inputW = Console.ReadLine();
@@ -194,12 +189,12 @@ namespace RtanNDungeon
                                 isJob = true; jobId = 1;
                                 break;
                             case "2": break;
-                            default: WriteInputError(); break;
+                            default: Utility.WriteInputError(); break;
                         }
                         break;
                     // if archer (not embodied)
                     case "2":
-                        WriteBlankLine();
+                        Utility.WriteBlankLine();
                         Console.WriteLine("정말로 궁수가 맞나요?");
                         Console.WriteLine("[1] 예\t[2] 아니오");
                         string inputA = Console.ReadLine();
@@ -209,7 +204,7 @@ namespace RtanNDungeon
                                 isJob = true; jobId = 2;
                                 break;
                             case "2": break;
-                            default: WriteInputError(); break;
+                            default: Utility.WriteInputError(); break;
                         }
                         break;
                 }
@@ -255,7 +250,7 @@ namespace RtanNDungeon
             {
                 while (true)
                 {
-                    WriteBlankLine();
+                    Utility.WriteBlankLine();
                     Console.WriteLine("저장된 데이터가 존재합니다. 불러올까요?");
                     Console.WriteLine("[1] 예\t[2] 아니오");
 
@@ -265,7 +260,7 @@ namespace RtanNDungeon
                     {
                         case "1": LoadData(); isFile = !isFile; return isFile;  // load player data
                         case "2": return isFile;  // generate new player
-                        default: WriteInputError(); break;
+                        default: Utility.WriteInputError(); break;
                     }
                 }
             }
@@ -330,14 +325,14 @@ namespace RtanNDungeon
         {
             while (true)
             {
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("\t\t==== 인벤토리 ====");
                 Console.WriteLine("보유 중인 아이템을 관리할 수 있습니다.");
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("\t\t[보유 아이템 목록]");
                 // show the list of items
                 ShowItemList(false, false);
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("[1] 장착 관리\t[0] 나가기");
 
                 // get player's input
@@ -347,7 +342,7 @@ namespace RtanNDungeon
                     case "1": ManageEquipment(); break;
                     case "0": StartMenu(); break;
                     default:
-                        WriteInputError(); break;
+                        Utility.WriteInputError(); break;
                 }
             }
         }
@@ -388,14 +383,14 @@ namespace RtanNDungeon
         {
             while (true)
             {
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("\t\t==== 인벤토리 - 장착관리 ====");
                 Console.WriteLine("보유 중인 아이템을 장착하거나 해제할 수 있습니다.");
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("\t[보유 아이템 목록]");
                 // show the list of items
                 ShowItemList(true, false);
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("[0] 나가기");
 
                 // get player's input
@@ -414,7 +409,7 @@ namespace RtanNDungeon
                     else
                     { Console.WriteLine("장착하거나 해제할 수 없는 아이템입니다."); }
                 }
-                else { WriteInputError(); }
+                else { Utility.WriteInputError(); }
             }
         }
 
@@ -423,10 +418,10 @@ namespace RtanNDungeon
         {
             while (true)
             {
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("\t\t==== 상점 ====");
                 Console.WriteLine("필요한 아이템을 구매하거나 가지고 있는 아이템을 판매할 수 있습니다.");
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("[1] 구매하기\t[2] 판매하기\t[0] 나가기");
 
                 // get player's input
@@ -439,7 +434,7 @@ namespace RtanNDungeon
                     case "2": SellItemPage(); break;
                     // exit shop
                     case "0": StartMenu(); break;
-                    default: WriteInputError(); break;
+                    default: Utility.WriteInputError(); break;
                 }
             }
         }
@@ -448,13 +443,13 @@ namespace RtanNDungeon
         {
             while (true)
             {
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("\t\t==== 상점 - 구매 ====");
                 Console.WriteLine("필요한 아이템을 구매할 수 있습니다.");
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("\t[구매 가능한 아이템 목록]");
                 ShowShopItemList();
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("[0] 나가기");
 
                 // get player's input
@@ -466,7 +461,7 @@ namespace RtanNDungeon
                 {
                     BuyItem(shop.items[itemNumber - 1]);
                 }
-                else { WriteInputError(); break; }
+                else { Utility.WriteInputError(); break; }
             }
         }
         // show shop's item list (buy menu)
@@ -519,13 +514,13 @@ namespace RtanNDungeon
         {
             while (true)
             {
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("\t\t==== 상점 - 판매 ====");
                 Console.WriteLine("가지고 있는 아이템을 판매할 수 있습니다.");
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("\t[판매 가능한 아이템 목록]");
                 ShowItemList(true, true);
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("[0] 나가기");
 
                 // get player's input
@@ -537,7 +532,7 @@ namespace RtanNDungeon
                     SellItem(player.inventory[itemNumber]);
                     break;
                 }
-                else { WriteInputError(); break; }
+                else { Utility.WriteInputError(); break; }
             }
         }
         // sell item
@@ -547,7 +542,7 @@ namespace RtanNDungeon
             if (item is IEquipable equipItem && equipItem.Equip)
             {
                 // warning message
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("이 아이템은 판매할 수 없습니다. 먼저 장비를 해제해 주세요.");
                 // return to the last page
                 SellItemPage();
@@ -558,7 +553,7 @@ namespace RtanNDungeon
                 while (true)
                 {
                     int itemPrice = (int)(item.Price * 0.8f);
-                    WriteBlankLine();
+                    Utility.WriteBlankLine();
                     Console.WriteLine($"이 아이템을 판매하면 {itemPrice} G를 얻을 수 있습니다.");
                     Console.WriteLine("정말 판매하시겠습니까?");
                     Console.WriteLine("[1] 예\t[2] 아니오");
@@ -573,11 +568,11 @@ namespace RtanNDungeon
                             // remove from inventory
                             player.RemoveItem(item);
                             // completion message
-                            WriteBlankLine();
+                            Utility.WriteBlankLine();
                             Console.WriteLine($"{item.Name}을(를) 판매해 {itemPrice} G를 얻었습니다. (현재 잔고: {player.Gold})");
                             SellItemPage(); break;
                         case "2": SellItemPage(); break;
-                        default: WriteInputError(); break;
+                        default: Utility.WriteInputError(); break;
                     }
                 }
             }
@@ -589,12 +584,12 @@ namespace RtanNDungeon
             while (true)
             {
                 // show basic introduction for using Inn
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("\t\t==== 여관 ====");
                 Console.WriteLine("필요하신 만큼 휴식을 취할 수 있는 공간 여관입니다!");
                 Console.WriteLine("일정 금액(100 G)을 지불하고 체력을 회복할 수 있습니다.");
                 // show inn menus
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("[1] 휴식하기 \t[0] 나가기");
 
                 // get plyaer's input
@@ -603,7 +598,7 @@ namespace RtanNDungeon
                 {
                     case "1": TakeRest(); break;
                     case "0": StartMenu(); break;
-                    default: WriteInputError(); break;
+                    default: Utility.WriteInputError(); break;
                 }
             }
         }
@@ -614,14 +609,14 @@ namespace RtanNDungeon
             if (player.Gold < 100)
             {
                 // cannot warning
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine($"잔고가 부족합니다. 휴식에는 100 G가 필요합니다. (현재 잔고: {player.Gold})");
                 VisitInn();
             }
             // check if player has max health, cannot rest warning (max health)
             else if (player.Health == 100)
             {
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("체력이 이미 최대치입니다. 휴식을 취할 필요가 없습니다.");
                 VisitInn();
             }
@@ -633,7 +628,7 @@ namespace RtanNDungeon
                 // give player max health (curr. 100 // [later] need max health value?)
                 player.Health = 100;
                 // show complete message
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine($"휴식을 취했습니다. 체력이 회복되었습니다. (현재 잔고: {player.Gold})");
                 VisitInn();
             }
@@ -646,11 +641,11 @@ namespace RtanNDungeon
             {
                 Dungeon dungeon = new Dungeon();
                 // show default message
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("\t==== 던전입장 ====");
                 Console.WriteLine("여러 난이도의 던전에 입장할 수 있습니다.\n클리어에 성공한다면 보상을 받을 수 있습니다.");
                 // show options (difficulty)
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("[1] Easy\t[2] Normal\t[3] Hard\t[0] 나가기");
 
                 // get pl's input
@@ -672,7 +667,7 @@ namespace RtanNDungeon
                         if (isDead) { Retry(); return; }
                         return;
                     case "0": StartMenu(); break;
-                    default: WriteInputError(); break;
+                    default: Utility.WriteInputError(); break;
                 }
             }
         }
@@ -680,13 +675,13 @@ namespace RtanNDungeon
         {
             while (true)
             {
-                WriteBlankLine();
-                DrawDivision();
+                Utility.WriteBlankLine();
+                Utility.DrawDivision();
                 Console.WriteLine("\t\t\t게임 오버!");
-                DrawDivision();
-                WriteBlankLine();
+                Utility.DrawDivision();
+                Utility.WriteBlankLine();
                 Console.WriteLine("다시 시작하시겠습니까?");
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("[1] 예\t[2] 아니오");
 
                 // get player's input
@@ -695,7 +690,7 @@ namespace RtanNDungeon
                 {
                     case "1": Start(); return;  // to introduction
                     case "2": EndGame(); return;  // end game
-                    default: WriteInputError(); break;
+                    default: Utility.WriteInputError(); break;
                 }
             }
         }
@@ -706,11 +701,11 @@ namespace RtanNDungeon
         {
             while (true)
             {
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("\t==== 게임저장 ====");
                 Console.WriteLine("게임을 저장하시겠습니까?");
                 // show options
-                WriteBlankLine();
+                Utility.WriteBlankLine();
                 Console.WriteLine("[1] 예\t[2] 아니오");
 
                 // get pl's input
@@ -720,7 +715,7 @@ namespace RtanNDungeon
                 {
                     case "1": player.SaveData(); break;  // save game
                     case "2": StartMenu(); break;  // return to start menu
-                    default: WriteInputError(); break;
+                    default: Utility.WriteInputError(); break;
                 }    
             }
         }
