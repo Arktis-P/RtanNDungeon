@@ -12,6 +12,8 @@ This is a personal project done at the Sparta BootCamp. Learned and applied how 
 ### Timeline
 - 25.02.03 (MON) PM : Started project
 - 25.02.04 (TUE) AM : Finished necesary functions + Fixed some bugs
+- 24.02.05 (WED) AM : Finished additional functions + Added game over process
+- 24.02.05 (WED) PM : Submitted personal project
 
 
 ### Necessary Functions
@@ -36,7 +38,30 @@ This is a personal project done at the Sparta BootCamp. Learned and applied how 
 - If player choose to take a rest at Inn,
   first, checkes if player has enough moeny (100 G); (if not, game prints out warning message and returns to Visit Inn page)
   second, checkes if player's health is not max (100); (if max, game prints out warning message and returns to Visit Inn page)
-  third, (if player has enough money and less health than max), take 100 G from player's gold, restore player' health to max, and prints completion message, then returns to Visit Inn page. 
+  third, (if player has enough money and less health than max), take 100 G from player's gold, restore player' health to max, and prints completion message, then returns to Visit Inn page.
+
+#### (3) Sell Item
+- Added sell item page and functions to sell items from player's inventory.
+- On sell item page, shows player's inventory like inventory checking, but added `isSelling` in `ShowItemList()` method to show item price when sold.
+  If `isSelling == true`, `ShowItemList()` method print item price at the end of each item.
+- With the number input, player can sell own item in inventory at 80% of item's original price.
+  When player tries to sell item, checks if the item is equipped. (If equipped, player cannot sell the item, and sees caution page.)
+
+#### (4) Enter Dungeon and Level Up
+- Player can now enter the dungeon of three different difficulties (Easy, Normal and Hard), and get reward and xp if cleared.
+- Added `Dungeon` Class, and `EnterDungeon` method.
+- If player decides to enter dungeon, asks to choose difficulty.
+  Dungeon has dynamic defense, reward values according to its difficulty and player's level.
+- If player clears dungeon, gets random damage, reward and xp.
+  If fails to clear, gets only damage.
+  If player's health drop below or same as 0, shows game over page, and asks if player wants to retry.
+
+#### (5) Save and Load Data
+- Added functions to save data to file and load data file when game is started.
+- Added `SaveData()` on `Player` class. Saves every player data in `save.txt` file line by line.
+- Added process to check and load saved data. When game is started, 
+  first, checks if there is `save.txt` file in the directory.
+  second, asks if player wants to load saved data. If yes, load player data and rewrite player object. If no, do not load player data and generates new player object.
 
 
 ### Trouble Shootings
