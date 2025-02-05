@@ -57,47 +57,19 @@ namespace RtanNDungeon
                 Utility.WriteBlankLine();
                 Console.WriteLine("이곳은 르탄향 중심지입니다. 르탄궁으로 향하기 전에 준비를 할 수 있습니다.\n무엇을 하시겠습니까?");
                 Utility.WriteBlankLine();
-                Console.WriteLine("[1] 상태보기\t[2] 인벤토리\t[3] 상점방문\t[4] 여관방문\t[5] 던전입장\n[8] 게임저장\t[99] 게임종료");
+                Console.WriteLine("[1] 상태보기\t[2] 인벤토리\t[3] 상점방문\t[4] 여관방문\t[5] 던전입장\n[6] 게임저장\t[0] 게임종료");
 
                 // get player's input (int only, in string value)
-                string input = Console.ReadLine();
+                int input = Utility.GetInput(0, 6);
                 switch (input)
                 {
-                    case "1": ShowStatus(); break;  // check status
-                    case "2": ShowInventory(); break;  // check inventory
-                    case "3": VisitShop(); break;  // visit shop
-                    case "4": VisitInn();  break;  // take a rest
-                    case "5": EnterDungeonPage(); break;  // explore dungeon
-                    case "8": SaveGame(); break;  // save game
-                    case "9": break;  // load game
-                    case "99": EndGame(); return;  // end game
-                    default: Utility.WriteInputError(); break;  // wrong input
-                }
-            }
-        }
-
-        // check status - show player's status
-        private void ShowStatus()
-        {
-            while (true)
-            {
-                Utility.WriteBlankLine();
-                Console.WriteLine("\t\t==== 상태보기 ====");
-                Console.WriteLine("캐릭터의 정보를 확인할 수 있습니다.");
-                Utility.WriteBlankLine();
-                Console.WriteLine($"이름: {player.Name} (레벨{player.Level} {player.Job})");  // player's name / level / job
-                Console.WriteLine($"공격: {player.Attack}\t방어: {player.Defense}\t체력: {player.Health}");  // player's attack / defense / health
-                Console.WriteLine($"잔고: {player.Gold}");  // player's gold
-
-                Console.WriteLine("[0] 나가기");
-
-                // get pl's input
-                string input = Console.ReadLine();
-                switch (input)
-                {
-                    case "0": StartMenu(); break;
-                    default:
-                        Utility.WriteInputError(); break;
+                    case 1: CheckStatus(); break;  // check status
+                    case 2: ShowInventory(); break;  // check inventory
+                    case 3: VisitShop(); break;  // visit shop
+                    case 4: VisitInn();  break;  // take a rest
+                    case 5: EnterDungeonPage(); break;  // explore dungeon
+                    case 6: SaveGame(); break;  // save game
+                    case 0: EndGame(); return;  // end game
                 }
             }
         }
@@ -331,7 +303,7 @@ namespace RtanNDungeon
                 Utility.WriteBlankLine();
                 Console.WriteLine("\t\t[보유 아이템 목록]");
                 // show the list of items
-                ShowItemList(false, false);
+                player.ShowInventory(false, false);
                 Utility.WriteBlankLine();
                 Console.WriteLine("[1] 장착 관리\t[0] 나가기");
 
@@ -346,70 +318,61 @@ namespace RtanNDungeon
                 }
             }
         }
-        // show list of items
-        private void ShowItemList(bool isManaging, bool isSelling)
+
+        // check status - show player's status
+        private void CheckStatus()
         {
-            List<Item> inven = player.inventory;
-            
-            // if inventory is empty
-            if (inven.Count == 0) { Console.WriteLine("  인벤토리가 비어 있습니다."); }
-            // else
-            else
+            while (true)
             {
-                for (int i = 0; i < inven.Count; i++)
+                Console.Clear();
+                Console.WriteLine("\t\t==== 상태보기 ====");
+                Console.WriteLine("캐릭터의 정보를 확인할 수 있습니다.");
+                // show player's status
+                player.ShowStatus();
+                // show user options
+                Utility.WriteBlankLine();
+                Console.WriteLine("[0] 나가기");
+
+                // get pl's input
+                int input = Utility.GetInput(0, 0);
+                switch (input)
                 {
-                    // initiating variables
-                    string itemNumber = "-";
-                    string equiped = "";
-                    string bonusLabel = "";
-                    string itemPrice = "";
-
-                    // check if on manage page
-                    if (isManaging) { itemNumber = $"[{i + 1}]"; }
-                    // check if item is equiped already
-                    if (inven[i] is IEquipable equipItem && equipItem.Equip) { equiped = "(E)"; }
-                    // check item bonus
-                    if (inven[i] is Weapon weaponItem) { bonusLabel = $"공격 +{weaponItem.Bonus}"; }
-                    else if (inven[i] is Armor armorItem) { bonusLabel = $"방어 +{armorItem.Bonus}"; }
-                    // check if on selling page
-                    if (isSelling) { itemPrice = $"\t| {(int)(inven[i].Price * 0.8f)}"; }
-
-                    Console.WriteLine($"{itemNumber} {equiped}{inven[i].Name}\t| {bonusLabel}\t| {inven[i].Desc}{itemPrice}");
+                    case 0: StartMenu(); break;
                 }
             }
         }
+
         // manage equipment
         private void ManageEquipment()
         {
             while (true)
             {
-                Utility.WriteBlankLine();
+                Console.Clear();
                 Console.WriteLine("\t\t==== 인벤토리 - 장착관리 ====");
                 Console.WriteLine("보유 중인 아이템을 장착하거나 해제할 수 있습니다.");
-                Utility.WriteBlankLine();
-                Console.WriteLine("\t[보유 아이템 목록]");
                 // show the list of items
-                ShowItemList(true, false);
+                player.ShowInventory(true, false);
+                // show player options
                 Utility.WriteBlankLine();
                 Console.WriteLine("[0] 나가기");
 
                 // get player's input
-                string input = Console.ReadLine();
+                int input = Utility.GetInput(0, player.inventory.Count);
                 // if input is 0, go back 
-                if (input == "0") { ShowInventory(); }
+                if (input == 0) { ShowInventory(); break; }
                 // if input is in item list, equip/unequip
-                else if (int.TryParse(input, out int itemNumber) && itemNumber > 0 && itemNumber <= player.inventory.Count)
+                // check if item is equiped or not
+                if (player.inventory[input - 1] is IEquipable equipItem)
                 {
-                    // check if item is equiped or not
-                    if (player.inventory[itemNumber - 1] is IEquipable equipItem)
-                    {
-                        if (equipItem.Equip) { player.UseItem(player.inventory[itemNumber - 1]); }
-                        else { player.UseItem(player.inventory[itemNumber - 1]); }
-                    }
-                    else
-                    { Console.WriteLine("장착하거나 해제할 수 없는 아이템입니다."); }
+                    if (equipItem.Equip) { player.UseItem(player.inventory[input - 1]); }
+                    else { player.UseItem(player.inventory[input - 1]); }
+                    break;
                 }
-                else { Utility.WriteInputError(); }
+                else
+                { 
+                    Console.WriteLine("장착하거나 해제할 수 없는 아이템입니다."); 
+                    break;
+                }
             }
         }
 
@@ -418,6 +381,7 @@ namespace RtanNDungeon
         {
             while (true)
             {
+                Console.Clear();
                 Utility.WriteBlankLine();
                 Console.WriteLine("\t\t==== 상점 ====");
                 Console.WriteLine("필요한 아이템을 구매하거나 가지고 있는 아이템을 판매할 수 있습니다.");
@@ -443,6 +407,7 @@ namespace RtanNDungeon
         {
             while (true)
             {
+                Console.Clear();
                 Utility.WriteBlankLine();
                 Console.WriteLine("\t\t==== 상점 - 구매 ====");
                 Console.WriteLine("필요한 아이템을 구매할 수 있습니다.");
@@ -514,12 +479,13 @@ namespace RtanNDungeon
         {
             while (true)
             {
+                Console.Clear();
                 Utility.WriteBlankLine();
                 Console.WriteLine("\t\t==== 상점 - 판매 ====");
                 Console.WriteLine("가지고 있는 아이템을 판매할 수 있습니다.");
                 Utility.WriteBlankLine();
                 Console.WriteLine("\t[판매 가능한 아이템 목록]");
-                ShowItemList(true, true);
+                player.ShowInventory(true, true);
                 Utility.WriteBlankLine();
                 Console.WriteLine("[0] 나가기");
 
@@ -583,6 +549,7 @@ namespace RtanNDungeon
         {
             while (true)
             {
+                Console.Clear();
                 // show basic introduction for using Inn
                 Utility.WriteBlankLine();
                 Console.WriteLine("\t\t==== 여관 ====");
@@ -641,6 +608,7 @@ namespace RtanNDungeon
             {
                 Dungeon dungeon = new Dungeon();
                 // show default message
+                Console.Clear();
                 Utility.WriteBlankLine();
                 Console.WriteLine("\t==== 던전입장 ====");
                 Console.WriteLine("여러 난이도의 던전에 입장할 수 있습니다.\n클리어에 성공한다면 보상을 받을 수 있습니다.");
@@ -675,6 +643,7 @@ namespace RtanNDungeon
         {
             while (true)
             {
+                Console.Clear();
                 Utility.WriteBlankLine();
                 Utility.DrawDivision();
                 Console.WriteLine("\t\t\t게임 오버!");
@@ -701,6 +670,7 @@ namespace RtanNDungeon
         {
             while (true)
             {
+                Console.Clear();
                 Utility.WriteBlankLine();
                 Console.WriteLine("\t==== 게임저장 ====");
                 Console.WriteLine("게임을 저장하시겠습니까?");
@@ -723,6 +693,7 @@ namespace RtanNDungeon
         // end game
         private void EndGame()
         {
+            Console.Clear();
             Console.WriteLine("게임을 종료합니다.");
             Environment.Exit(0);  // normal exit
         }

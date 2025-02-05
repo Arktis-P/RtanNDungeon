@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -51,7 +52,44 @@ namespace RtanNDungeon
             }
         }
 
-        // player status methods
+        // show player status
+        public void ShowStatus()
+        {
+            Utility.WriteBlankLine();
+            Console.WriteLine($"이름: {Name} (레벨{Level} {Job})");  // player's name / level / job
+            Console.WriteLine($"공격: {Attack}\t방어: {Defense}\t체력: {Health}");  // player's attack / defense / health
+            Console.WriteLine($"잔고: {Gold}");  // player's gold
+        }
+
+        // show player inventory
+        public void ShowInventory(bool isManaging = false, bool isSelling = false)
+        {
+            Utility.WriteBlankLine();
+            Console.WriteLine("\t[보유 아이템 목록]");
+            
+            // if inven is empty
+            if (inventory.Count == 0) { Console.WriteLine("  인벤토리가 비어 있습니다."); }
+            else
+            {
+                string itemNumber, equipped, bonusLabel, itemPrice;
+                for (int i = 0; i < inventory.Count; i++)
+                {
+                    itemNumber = "-"; equipped = ""; bonusLabel = ""; itemPrice = "";
+                    // check if on management page
+                    if (isManaging) { itemNumber = $"[{i + 1}]"; }
+                    // check if item is equiped already
+                    if (inventory[i] is IEquipable equipItem && equipItem.Equip) { equipped = "(E)"; }
+                    // check item bonus
+                    if (inventory[i] is Weapon weaponItem) { bonusLabel = $"공격 +{weaponItem.Bonus}"; }
+                    else if (inventory[i] is Armor armorItem) { bonusLabel = $"방어 +{armorItem.Bonus}"; }
+                    // check if on selling page
+                    if (isSelling) { itemPrice = $"\t| {(int)(inventory[i].Price * 0.8f)}"; }
+
+                    Console.WriteLine($"{itemNumber} {equipped}{inventory[i].Name}\t| {bonusLabel}\t| {inventory[i].Desc}{itemPrice}");
+                }
+            }
+        }
+
         // up player's level
         public void LevelUp()
         {
