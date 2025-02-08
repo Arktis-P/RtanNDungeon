@@ -1,6 +1,9 @@
+<div align="center">
 # RtanNDungeon
 This is a personal project done at the Sparta BootCamp. Learned and applied how to utilize C# codes in real project
+</div>
 
+---
 
 ### Overview
 - Period: 25.02.03 (MON) - 25.02.05 (WED)
@@ -9,12 +12,15 @@ This is a personal project done at the Sparta BootCamp. Learned and applied how 
   This is a personal project done at the Sparta BootCamp. To learn and apply C# codes and their function, built and wrote a script of a TEXT RPG.
   Followed Team Sparta's instruction for necessary functions, and tried more for additional functions written on instruction page.
 
+---
+
 ### Timeline
 - 25.02.03 (MON) PM : Started project
 - 25.02.04 (TUE) AM : Finished necesary functions + Fixed some bugs
 - 24.02.05 (WED) AM : Finished additional functions + Added game over process
 - 24.02.05 (WED) PM : Submitted personal project
 
+---
 
 ### Necessary Functions
 #### Start Page
@@ -25,6 +31,7 @@ This is a personal project done at the Sparta BootCamp. Learned and applied how 
 
 #### Visit Shop Page & Buy Item Page 
 
+---
 
 ### Additional Functions
 #### (1) Item Databse
@@ -63,6 +70,7 @@ This is a personal project done at the Sparta BootCamp. Learned and applied how 
   first, checks if there is `save.txt` file in the directory.
   second, asks if player wants to load saved data. If yes, load player data and rewrite player object. If no, do not load player data and generates new player object.
 
+---
 
 ### Trouble Shootings
 #### (1) Variable Initiating Layer
